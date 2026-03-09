@@ -40,7 +40,7 @@ class FileFieldForm(forms.Form):
 
 class UserRegistrationForm(UserCreationForm):
     name = forms.CharField(max_length=50, help_text='Required. Add your full name.')
-    mobile = forms.IntegerField(help_text='Required. Add a contact number.')
+    mobile = forms.CharField(max_length=20, help_text='Required. Add a contact number.')
     
     class Meta:
         model = User

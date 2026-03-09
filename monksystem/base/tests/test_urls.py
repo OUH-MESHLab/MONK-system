@@ -6,80 +6,80 @@ class TestUrls(SimpleTestCase):
     
     def test_home_url_resolves(self):
         url = reverse('home')
-        self.assertEquals(resolve(url).func, home_page)
+        self.assertEqual(resolve(url).func, home_page)
 
     def test_login_url_resolves(self):
         url = reverse('login')
-        self.assertEquals(resolve(url).func, login_page)
+        self.assertEqual(resolve(url).func, login_page)
 
     def test_logout_url_resolves(self):
         url = reverse('logout')
-        self.assertEquals(resolve(url).func, logout_user)
+        self.assertEqual(resolve(url).func, logout_user)
 
     def test_register_url_resolves(self):
         url = reverse('register')
-        self.assertEquals(resolve(url).func, register_page)
+        self.assertEqual(resolve(url).func, register_page)
 
     def test_file_detail_url_resolves(self):
         url = reverse('file', kwargs={'file_id': 1})
-        self.assertEquals(resolve(url).func, file)
+        self.assertEqual(resolve(url).func, file)
 
     def test_view_files_url_resolves(self):
         url = reverse('view_files')
-        self.assertEquals(resolve(url).func, view_files)
+        self.assertEqual(resolve(url).func, view_files)
 
     def test_import_file_url_resolves(self):
         url = reverse('import_file')
-        self.assertEquals(resolve(url).func, import_file)
+        self.assertEqual(resolve(url).func, import_file)
 
     def test_import_multiple_files_url_resolves(self):
         url = reverse('import_multiple_files')
-        self.assertEquals(resolve(url).func, import_multiple_files)
+        self.assertEqual(resolve(url).func, import_multiple_files)
 
     def test_user_detail_url_resolves(self):
         url = reverse('user', kwargs={'pk': '1'})
-        self.assertEquals(resolve(url).func, user)
+        self.assertEqual(resolve(url).func, user)
 
     def test_subject_detail_url_resolves(self):
         url = reverse('subject', kwargs={'pk': 'S001'})
-        self.assertEquals(resolve(url).func, subject)
+        self.assertEqual(resolve(url).func, subject)
 
     def test_view_subjects_url_resolves(self):
         url = reverse('view_subjects')
-        self.assertEquals(resolve(url).func, view_subjects)
+        self.assertEqual(resolve(url).func, view_subjects)
 
     def test_project_detail_url_resolves(self):
         url = reverse('project', kwargs={'pk': 'P001'})
-        self.assertEquals(resolve(url).func, project)
+        self.assertEqual(resolve(url).func, project)
 
     def test_view_projects_url_resolves(self):
         url = reverse('view_projects')
-        self.assertEquals(resolve(url).func, view_projects)
+        self.assertEqual(resolve(url).func, view_projects)
 
     def test_add_project_url_resolves(self):
         url = reverse('add_project')
-        self.assertEquals(resolve(url).func, add_project)
+        self.assertEqual(resolve(url).func, add_project)
 
     def test_leave_project_url_resolves(self):
         url = reverse('leave_project', kwargs={'project_id': 1})
-        self.assertEquals(resolve(url).func, leave_project)
+        self.assertEqual(resolve(url).func, leave_project)
 
     def test_edit_project_url_resolves(self):
         url = reverse('edit_project', kwargs={'project_id': 1})
-        self.assertEquals(resolve(url).func, edit_project)
+        self.assertEqual(resolve(url).func, edit_project)
 
     def test_download_mfer_header_url_resolves(self):
         url = reverse('download_mfer_header', kwargs={'file_id': 1})
-        self.assertEquals(resolve(url).func, download_mfer_header)
+        self.assertEqual(resolve(url).func, download_mfer_header)
 
     def test_download_mwf_url_resolves(self):
         url = reverse('download_mwf', kwargs={'file_id': 1})
-        self.assertEquals(resolve(url).func, download_mwf)
+        self.assertEqual(resolve(url).func, download_mwf)
 
     def test_plot_graph_url_resolves(self):
         url = reverse('plot_graph', kwargs={'file_id': 1})
-        self.assertEquals(resolve(url).func, plot_graph)
+        self.assertEqual(resolve(url).func, plot_graph)
 
     def test_download_csv_format_url_resolves(self):
         url = reverse('download_format_csv', kwargs={'file_id': 1})
-        self.assertEquals(resolve(url).func, download_format_csv)
+        self.assertEqual(resolve(url).func, download_format_csv)

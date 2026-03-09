@@ -11,7 +11,7 @@ from django.utils.timezone import now
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null = True, related_name='userprofile')
     name = models.CharField(max_length=50)
-    mobile = models.IntegerField()
+    mobile = models.CharField(max_length=20)
     
     def __str__(self):
         return self.name
@@ -59,7 +59,7 @@ class Project(models.Model):
     created = models.DateTimeField(auto_now_add = True) # Takes a timestamp of when the instance was created.
     
     def __str__(self):
-        return self.rekNummer
+        return self.rekNummer or ""
     
 # Model for file import
 class FileImport(models.Model):

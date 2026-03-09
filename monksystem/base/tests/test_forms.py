@@ -28,9 +28,9 @@ class TestForms(TestCase):
         form = UserRegistrationForm(data={
             'username': 'testuser',
             'name': 'Test User',
-            'mobile': 'invalid-mobile',  # Invalid mobile number
-            'password1': 'password',
-            'password2': 'password'
+            'mobile': '',  # Required field left empty
+            'password1': 'verysecurepassword123',
+            'password2': 'verysecurepassword123'
         })
         self.assertFalse(form.is_valid())
         self.assertIn('mobile', form.errors)
