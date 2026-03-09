@@ -4,3 +4,7 @@ nihon_kohden_files/
 env/
 htmlcov/
 .coverage
+.venv/
+.monklib-src/
+.direnv/
+.aider*
