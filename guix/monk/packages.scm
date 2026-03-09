@@ -36,13 +36,13 @@
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/MONK-system/library.git")
-             (commit "6fc6c25b36c04af122d0b44a4a9df6921910fba7")
+             (url "https://github.com/OUH-MESHLab/MONK-library.git")
+             (commit "91474f84e0137b89f257f110878558f6986447f4")
              ;; pybind11 is a bundled git submodule — must be fetched recursively.
              (recursive? #t)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0cniqgs7f9sr8nbvlj5wxllsicamz0y6g95vrwqxr735xw0ijyrz"))))
+        (base32 "18pdnqzm5rw78g9pqh1k78xvk4dsyv96allfgk1ndj9pwndb3b0f"))))
     (build-system python-build-system)
     (arguments
      (list
@@ -61,7 +61,7 @@
      "monklib is a C++ library with Python bindings (via pybind11) for reading
 Nihon-Kohden MFER (.mwf) waveform files.  It provides header extraction,
 waveform data access, and CSV conversion used by the MONK platform.")
-    (home-page "https://github.com/MONK-system/library")
+    (home-page "https://github.com/OUH-MESHLab/MONK-library")
     (license license:expat)))
 
 
