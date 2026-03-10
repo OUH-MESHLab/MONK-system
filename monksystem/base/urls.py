@@ -28,6 +28,7 @@ urlpatterns = [
     path('add_project/', views.add_project, name = "add_project"),
     path('leave_project/<int:project_id>/', views.leave_project, name='leave_project'),
     path('edit_project/<int:project_id>/', views.edit_project, name='edit_project'),
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
     
     path('download-MFER-Header/<int:file_id>/', views.download_mfer_header, name='download_mfer_header'),
     path('download-MWF/<int:file_id>/', views.download_mwf, name='download_mwf'),

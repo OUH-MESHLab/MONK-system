@@ -1,183 +1,218 @@
 {% extends 'main.html' %}
 
+{% block title %}{{ file.title }} — MONK{% endblock %}
+
 {% block content %}
-<h2 class="text-center mt-4 mb-3 pt-3">File Details</h2>
-<div class="container mt-5">
-    <div class="card">
-        <form action="{% url 'download_format_csv' file.id %}" method="post">
-            {% csrf_token %}
-            <!-- Fieldset for Channel Selection -->
-            <fieldset class="card-header">
-                <h5>Channel Selection</h5>
-                <div class="form-check form-check-inline d-flex flex-wrap">
+<div class="container mt-4">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'view_files' %}">Files</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ file.title }}</li>
+        </ol>
+    </nav>
+
+    <h2 class="mb-4">{{ file.title }}</h2>
+
+    <!-- File Content Card -->
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">File Content</h5></div>
+        <div class="card-body">
+            {% if is_text_file %}
+            <pre class="card-text p-3">{{ content }}</pre>
+            {% elif is_MFER_file %}
+            <h6 class="text-muted mb-2">MFER File Header</h6>
+            <pre class="card-text p-3">{{ content }}</pre>
+            {% else %}
+            <p class="card-text">Unsupported file format for direct display.</p>
+            <a href="{{ file.file.url }}" class="btn btn-primary" target="_blank">Download File</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Actions Panel -->
+    <ul class="nav nav-tabs mb-0" id="actionTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="visualize-tab" data-bs-toggle="tab" data-bs-target="#visualize"
+                    type="button" role="tab" aria-controls="visualize" aria-selected="true">
+                <i class="bi bi-graph-up me-1"></i>Visualize
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="csv-tab" data-bs-toggle="tab" data-bs-target="#csv"
+                    type="button" role="tab" aria-controls="csv" aria-selected="false">
+                <i class="bi bi-filetype-csv me-1"></i>Export CSV
+            </button>
+        </li>
+        {% if is_MFER_file %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="download-tab" data-bs-toggle="tab" data-bs-target="#download"
+                    type="button" role="tab" aria-controls="download" aria-selected="false">
+                <i class="bi bi-download me-1"></i>Download Raw
+            </button>
+        </li>
+        {% endif %}
+    </ul>
+
+    <div class="tab-content border border-top-0 rounded-bottom p-4 mb-4" id="actionTabsContent">
+
+        <!-- Visualize tab -->
+        <div class="tab-pane fade show active" id="visualize" role="tabpanel" aria-labelledby="visualize-tab">
+            <div class="row g-3 align-items-end mb-3">
+                <div class="col-auto">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="combined-checkbox">
+                        <label class="form-check-label" for="combined-checkbox">
+                            <i class="bi bi-diagram-3 me-1"></i>Combined Graph
+                        </label>
+                    </div>
+                </div>
+                <div class="col-auto d-flex align-items-center gap-2">
+                    <label for="rows-input" class="form-label mb-0">
+                        <i class="bi bi-list-ol me-1"></i>Rows:
+                    </label>
+                    <input type="number" id="rows-input" value="10000" min="1"
+                           class="form-control form-control-sm" style="width:120px;">
+                </div>
+            </div>
+            <button id="plot-graph" class="btn btn-primary" data-file-id="{{ file.id }}">
+                <i class="bi bi-play-fill me-1"></i>View Vitals
+            </button>
+            <div id="loading-message" class="alert alert-info mt-3" style="display:none;">
+                Loading… <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            </div>
+            <div id="graph-container" class="mt-3"></div>
+        </div>
+
+        <!-- Export CSV tab -->
+        <div class="tab-pane fade" id="csv" role="tabpanel" aria-labelledby="csv-tab">
+            <form action="{% url 'download_format_csv' file.id %}" method="post">
+                {% csrf_token %}
+                <h6 class="mb-2">Channel Selection</h6>
+                <div class="d-flex flex-wrap gap-3 mb-3">
                     {% for channel in content.channels %}
-                    <div class="form-check ml-2">
-                        <input class="form-check-input" type="checkbox" name="channels" value="{{ channel.attribute }}" id="channel_{{ forloop.counter0 }}" checked>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="channels"
+                               value="{{ channel.attribute }}" id="channel_{{ forloop.counter0 }}" checked>
                         <label class="form-check-label" for="channel_{{ forloop.counter0 }}">
                             {{ channel.attribute }}
                         </label>
                     </div>
                     {% endfor %}
                 </div>
-                <!-- Buttons for selecting/deselecting all channels -->
-                <div class="d-flex justify-content-center mt-2">
-                    <button type="button" class="btn btn-primary select-all-btn btn-sm mr-2">Select All</button>
-                    <button type="button" class="btn btn-secondary deselect-all-btn btn-sm">Deselect All</button>
+                <div class="mb-3">
+                    <button type="button" class="btn btn-outline-secondary btn-sm select-all-btn me-2">Select All</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm deselect-all-btn">Deselect All</button>
                 </div>
-            </fieldset>
-            <!-- Fieldset for Time Interval Selection -->
-            <fieldset class="card">
-                <div class="card-header"><h5>Time Interval Selection</h5></div>
-                <div class="card-body">
-                    <label for="start_time">Start Time (in seconds):</label>
-                    <input type="number" id="start_time" name="start_time" min="0" step="0.1" placeholder="Set start time..." class="form-control">
-                    <label for="end_time">End Time (in seconds):</label>
-                    <input type="number" id="end_time" name="end_time" min="0" step="0.1" placeholder="Set end time..." class="form-control">
+
+                <h6 class="mb-2">Time Interval</h6>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-4">
+                        <label for="start_time" class="form-label">Start Time (s)</label>
+                        <input type="number" id="start_time" name="start_time" min="0" step="0.1"
+                               placeholder="Start time…" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="end_time" class="form-label">End Time (s)</label>
+                        <input type="number" id="end_time" name="end_time" min="0" step="0.1"
+                               placeholder="End time…" class="form-control">
+                    </div>
                 </div>
-            </fieldset>
-            <!-- Download CSV Button -->
-            <div class="card-footer text-center">
-                <button type="submit" class="btn btn-success" style="min-width: 200px;"><strong>Download CSV</strong></button>
-            </div>
-        </form>
-
-        <fieldset class = "card">
-            <!-- Section for downloading MFER data with anonymization options -->
-            {% if is_MFER_file %}
-            <div class="card-header d-flex justify-content-center">
-                <div class="d-flex align-items-center">
-                    <!-- Form for downloading MFER header -->
-                    <form action="{% url 'download_mfer_header' file.id %}" method="post" class="mr-5 d-flex align-items-center">
-                        {% csrf_token %}
-                        <div class="custom-control custom-switch mr-2">
-                            <input type="checkbox" class="custom-control-input" id="anonymizeSwitch" name="anonymize" value="true">
-                            <label class="custom-control-label" for="anonymizeSwitch">Anonymize</label>
-                        </div>
-                        <button type="submit" class="btn btn-info"><strong>Download MFER Header</strong></button>
-                    </form>
-
-                    <!-- Form for downloading raw MFER data -->
-                    <form action="{% url 'download_mwf' file.id %}" method="get" class="mr-5 d-flex align-items-center">
-                        {% csrf_token %}
-                        <div class="custom-control custom-switch mr-2">
-                            <input type="checkbox" class="custom-control-input" id="anonymize_data" name="anonymize" value="true">
-                            <label class="custom-control-label" for="anonymize_data">Anonymize</label>
-                        </div>
-                        <button type="submit" class="btn btn-info"><strong>Download MWF</strong></button>
-                    </form>
-                </div>
-            </div>
-            {% endif %}
-        </fieldset>
-
-        <!-- Display File Content -->
-        <div class="card-body">
-            <h4 class="card-title mb-4">Title: {{ file.title }}</h4>
-            <h5 class="card-title mb-4">ID: {{ file.id }}</h5>
-            {% if is_text_file %}
-            <h5 class="card-subtitle mb-2 text-muted">File Content:</h5>
-            <pre class="card-text p-3">{{ content }}</pre>
-            {% elif is_MFER_file %}
-            <h5 class="card-subtitle mb-2 text-muted">MFER File Header:</h5>
-            <pre class="card-text p-3">{{ content }}</pre>
-            {% else %}
-            <p class="card-text">Unsupported file format for direct display.</p>
-            <a href="{{ file.file.url }}" class="btn btn-primary btn-lg" target="_blank">Download File</a>
-            {% endif %}
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-download me-1"></i>Download CSV
+                </button>
+            </form>
         </div>
-                
-        <div class="card-footer">
-            <div class="form-group">
-                <label for="combined-checkbox"><i class="bi bi-diagram-3" style="margin-right: 10px;"></i>Combined Graph:</label>
-                <input type="checkbox" id="combined-checkbox" name="combined">
-            </div>
-            <div class="form-group">
-                <label for="rows-input"><i class="bi bi-list-ol" style="margin-right: 10px;"></i>Number of Rows:</label>
-                <input type="number" id="rows-input" name="rows" value="10000" min="1">
-            </div>
-            
-            <div class="card-footer">
-                <div>
-                    <div id="graph-container" class="mt-4"></div>
-                    <div id="loading-message" style="display:none;" class="alert alert-info">Loading...
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+
+        <!-- Download Raw tab -->
+        {% if is_MFER_file %}
+        <div class="tab-pane fade" id="download" role="tabpanel" aria-labelledby="download-tab">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header"><strong>MFER Header</strong></div>
+                        <div class="card-body d-flex flex-column">
+                            <form action="{% url 'download_mfer_header' file.id %}" method="post"
+                                  class="d-flex flex-column flex-grow-1">
+                                {% csrf_token %}
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="anonymizeSwitch"
+                                           name="anonymize" value="true">
+                                    <label class="form-check-label" for="anonymizeSwitch">Anonymize</label>
+                                </div>
+                                <button type="submit" class="btn btn-info mt-auto">
+                                    <i class="bi bi-download me-1"></i>Download MFER Header
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-        
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <button id="plot-graph" class="btn btn-primary btn-lg" data-file-id="{{ file.id }}" style="width: 55%; margin-bottom: 15px;">
-                        View vitals</button>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header"><strong>Raw MWF File</strong></div>
+                        <div class="card-body d-flex flex-column">
+                            <form action="{% url 'download_mwf' file.id %}" method="get"
+                                  class="d-flex flex-column flex-grow-1">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="anonymize_data"
+                                           name="anonymize" value="true">
+                                    <label class="form-check-label" for="anonymize_data">Anonymize</label>
+                                </div>
+                                <button type="submit" class="btn btn-info mt-auto">
+                                    <i class="bi bi-download me-1"></i>Download MWF
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+        {% endif %}
+
     </div>
 </div>
+{% endblock %}
 
-
+{% block scripts %}
 <script>
-    // Ensuring the DOM is fully loaded before running the script
     document.addEventListener('DOMContentLoaded', function () {
-        function selectAllChannels(selectAll) {
-            // Get all checkbox elements with the name 'channels'
-            const checkboxes = document.querySelectorAll('input[name="channels"]');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = selectAll; // Set the checked status based on the selectAll parameter
-            });
-        }
-    
-        // Attaching the functions to buttons without inline JavaScript
-        const selectAllButton = document.querySelector('.select-all-btn');
-        const deselectAllButton = document.querySelector('.deselect-all-btn');
-    
-        selectAllButton.addEventListener('click', function() {
-            selectAllChannels(true);
-        });
-    
-        deselectAllButton.addEventListener('click', function() {
-            selectAllChannels(false);
-        });
+        const checkboxes = document.querySelectorAll('input[name="channels"]');
+        document.querySelector('.select-all-btn')?.addEventListener('click', () =>
+            checkboxes.forEach(cb => cb.checked = true));
+        document.querySelector('.deselect-all-btn')?.addEventListener('click', () =>
+            checkboxes.forEach(cb => cb.checked = false));
     });
 </script>
 
-
 <script>
-    document.getElementById('plot-graph').addEventListener('click', function() {
+    document.getElementById('plot-graph').addEventListener('click', function () {
         var file_id = this.getAttribute('data-file-id');
         var combined = document.getElementById('combined-checkbox').checked ? 'true' : 'false';
         var rows = document.getElementById('rows-input').value;
-
         var url = `/plot_graph/${file_id}/?combined=${combined}&rows=${rows}`;
-        
-        // Show loading message
+
         var loadingMessage = document.getElementById('loading-message');
         loadingMessage.style.display = 'block';
 
         fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok: ' + response.statusText);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.error) {
-                console.error('Error:', data.error);
-            } else {
-                var plotWindow = window.open("", "_blank", "width=800,height=600");
-                plotWindow.document.write('<html><head><title>Plot Graph</title><script src="https://cdn.plot.ly/plotly-latest.min.js"><\/script></head><body>' + data.graph_html + '</body></html>');
-                plotWindow.document.close();
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        })
-        .finally(() => {
-            // Hide loading message
-            loadingMessage.style.display = 'none';
-        });
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok: ' + response.statusText);
+                return response.json();
+            })
+            .then(data => {
+                if (!data.error) {
+                    var plotWindow = window.open("", "_blank", "width=800,height=600");
+                    plotWindow.document.write(
+                        '<html><head><title>Plot Graph</title>' +
+                        '<script src="https://cdn.plot.ly/plotly-latest.min.js"><\/script>' +
+                        '</head><body>' + data.graph_html + '</body></html>'
+                    );
+                    plotWindow.document.close();
+                }
+            })
+            .catch(error => console.error('Error:', error))
+            .finally(() => loadingMessage.style.display = 'none');
     });
 </script>
-
 {% endblock %}
-
-
-    

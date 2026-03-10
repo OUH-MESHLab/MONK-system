@@ -1,86 +1,50 @@
 {% extends 'main.html' %}
 
-{% load static %}
+{% block title %}Projects — MONK{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2 class="text-center mb-4">View Projects</h2>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Projects</h2>
+        <a href="{% url 'add_project' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i>New Project
+        </a>
+    </div>
 
     {% if projects %}
+    <div class="list-group">
         {% for project in projects %}
-        <div class="card mb-5">
-            <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white">
+        <div class="list-group-item list-group-item-action">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="mb-1">
+                        <a href="{% url 'project' project.id %}" class="text-decoration-none">
+                            <i class="bi bi-briefcase-fill me-2 text-primary"></i>{{ project.rekNummer }}
+                        </a>
+                    </h6>
+                    {% if project.description %}
+                    <p class="mb-1 text-muted small">{{ project.description|truncatechars:100 }}</p>
+                    {% endif %}
+                    <small class="text-muted">
+                        <i class="bi bi-people me-1"></i>{{ project.users.count }} user{{ project.users.count|pluralize }}
+                        &nbsp;·&nbsp;
+                        <i class="bi bi-journal-bookmark me-1"></i>{{ project.subjects.count }} subject{{ project.subjects.count|pluralize }}
+                    </small>
+                </div>
                 {% if request.user.userprofile in project.users.all %}
-                    <a href="{% url 'project' project.id %}" style="text-decoration: none; color: white;">
-                        <i class="bi bi-briefcase-fill" style="margin-right: 10px;"></i>
-                        <strong>Project: {{ project.rekNummer }}</strong>
-                    </a>
-                    <div>
-                        <a href="{% url 'edit_project' project.id %}" class="btn btn-secondary btn-sm me-1">Edit Project</a>
-                        <a href="{% url 'leave_project' project.id %}" class="btn btn-danger btn-sm">Leave Project</a>
-                    </div>
-                    {% else %}
-                    <span>
-                        <i class="bi bi-briefcase-fill" style="margin-right: 10px;"></i>
-                        <strong>Project: {{ project.rekNummer }}</strong>
-                    </span>
+                <div class="ms-3 text-nowrap">
+                    <a href="{% url 'edit_project' project.id %}" class="btn btn-outline-secondary btn-sm me-1">Edit</a>
+                    <a href="{% url 'leave_project' project.id %}" class="btn btn-outline-danger btn-sm">Leave</a>
+                </div>
                 {% endif %}
-            </div>
-            <div class="card-body">
-                <p class="card-text"><strong><i class="bi bi-person-badge-fill"></i> Users involved:</strong></p>
-                <div class="row">
-                    {% for user in project.users.all %}
-                    <div class="col-md-4 mb-3">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title"><i class="bi bi-person-circle"></i> {{ user.name }}</h5>
-                                <p class="card-text"><i class="bi bi-card-heading" style="margin-right: 10px;"></i><strong>ID:</strong> {{ user.id }}</p>
-                                <a href="{% url 'user' user.id %}" class="btn btn-primary">View User</a>
-                            </div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="col">
-                        <p>No users assigned to this project yet.</p>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <p class="card-text"><strong><i class="bi bi-people-fill"></i> Subjects involved:</strong></p>
-                <div class="row">
-                    {% for subject in project.subjects.all %}
-                    <div class="col-md-4 mb-3">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title"><i class="bi bi-person-lines-fill"></i> {{ subject.name }}</h5>
-                                <p class="card-text"><i class="bi bi-card-heading" style="margin-right: 10px;"></i><strong>ID:</strong> {{ subject.subject_id }}</p>
-                                <p class="card-text"><i class="bi bi-file-earmark-text" style="margin-right: 10px;"></i><strong>File:</strong> {{ subject.file.title }}</p>
-                                {% if subject.file %}
-                                    <a href="{% url 'file' subject.file.id %}" class="btn btn-success" style="font-weight: bold;">View File</a>
-                                {% else %}
-                                    <p>No file associated</p>
-                                {% endif %}
-                                {% if request.user.userprofile in project.users.all %}
-                                    <a href="{% url 'subject' subject.subject_id %}" class="btn btn-primary">View Subject</a>
-                                {% else %}
-                                    <button class="btn btn-secondary" disabled>View Subject</button>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="col">
-                        <p>No subjects assigned to this project yet.</p>
-                    </div>
-                    {% endfor %}
-                </div>
             </div>
         </div>
         {% endfor %}
+    </div>
     {% else %}
-        <div class="alert alert-info" role="alert">
-            You are not part of any projects.
-        </div>
+    <div class="alert alert-info" role="alert">
+        You are not part of any projects.
+    </div>
     {% endif %}
 </div>
 {% endblock %}

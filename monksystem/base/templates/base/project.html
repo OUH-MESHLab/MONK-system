@@ -1,35 +1,85 @@
 {% extends 'main.html' %}
 
+{% block title %}{{ project.rekNummer }} — MONK{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <div class="card">
-        <h5 class="card-header">Project Details</h5>
-        <div class="card-body">
-            <p class="card-title"><strong><i class="bi bi-card-list" style="margin-right: 5px;"></i>REK-number: </strong>{{ project.rekNummer }}</p>
-            <p class="card-text"><strong><i class="bi bi-card-list" style="margin-right: 5px;"></i>Project ID:</strong> {{ project.id }}</p>
-            <p class="card-text"><strong><i class="bi bi-textarea-resize" style="margin-right: 5px;"></i>Description:</strong> {{ project.description }}</p>
-            
-            <!-- Displaying multiple users -->
-            <p class="card-text"><strong><i class="bi bi-people-fill" style="margin-right: 5px;"></i>Users involved:</strong>
-                {% for user in project.users.all %}
-                    {{ user.name }}{% if not forloop.last %}, {% endif %}
-                {% empty %}
-                    No users assigned.
-                {% endfor %}
-            </p>
-            
-            <!-- Displaying multiple subjects -->
-            <p class="card-text"><strong><i class="bi bi-journal-bookmark-fill" style="margin-right: 5px;"></i>Subjects involved:</strong>
-                {% for subject in project.subjects.all %}
-                    {{ subject.name }}{% if not forloop.last %}, {% endif %}
-                {% empty %}
-                    No subjects assigned.
-                {% endfor %}
-            </p>
-            
-            <p class="card-text"><strong><i class="bi bi-calendar-event" style="margin-right: 5px;"></i>Updated:</strong> {{ project.updated|date:"Y-m-d H:i" }}</p>
-            <p class="card-text"><strong><i class="bi bi-calendar-plus" style="margin-right: 5px;"></i>Created:</strong> {{ project.created|date:"Y-m-d H:i" }}</p>
+<div class="container mt-4">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'view_projects' %}">Projects</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ project.rekNummer }}</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 class="mb-1">{{ project.rekNummer }}</h2>
+            {% if project.description %}
+            <p class="text-muted mb-0">{{ project.description }}</p>
+            {% endif %}
         </div>
+        {% if request.user.userprofile in project.users.all %}
+        <div class="text-nowrap">
+            <a href="{% url 'edit_project' project.id %}" class="btn btn-secondary btn-sm me-1">Edit Project</a>
+            <a href="{% url 'leave_project' project.id %}" class="btn btn-outline-danger btn-sm">Leave</a>
+        </div>
+        {% endif %}
     </div>
+
+    <p class="text-muted small mb-4">
+        <i class="bi bi-calendar-plus me-1"></i>Created {{ project.created|date:"Y-m-d" }}
+        &nbsp;·&nbsp;
+        <i class="bi bi-clock me-1"></i>Updated {{ project.updated|date:"Y-m-d" }}
+    </p>
+
+    <!-- Users -->
+    <h5 class="mb-3"><i class="bi bi-people-fill me-2"></i>Users ({{ project.users.count }})</h5>
+    <div class="row g-3 mb-4">
+        {% for user in project.users.all %}
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-person-circle me-1"></i>{{ user.name }}</h6>
+                    <a href="{% url 'user' user.id %}" class="btn btn-outline-primary btn-sm">View Profile</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col"><p class="text-muted">No users assigned.</p></div>
+        {% endfor %}
+    </div>
+
+    <!-- Subjects -->
+    <h5 class="mb-3"><i class="bi bi-journal-bookmark-fill me-2"></i>Subjects ({{ project.subjects.count }})</h5>
+    <div class="row g-3">
+        {% for subject in project.subjects.all %}
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-person-lines-fill me-1"></i>{{ subject.name|default:subject.subject_id }}
+                    </h6>
+                    <p class="card-text small text-muted">
+                        <i class="bi bi-file-earmark me-1"></i>{{ subject.file.title }}
+                    </p>
+                    <div>
+                        {% if subject.file %}
+                        <a href="{% url 'file' subject.file.id %}" class="btn btn-outline-success btn-sm me-1">View File</a>
+                        {% endif %}
+                        {% if request.user.userprofile in project.users.all %}
+                        <a href="{% url 'subject' subject.subject_id %}" class="btn btn-outline-primary btn-sm">View Subject</a>
+                        {% else %}
+                        <button class="btn btn-outline-secondary btn-sm" disabled>View Subject</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col"><p class="text-muted">No subjects assigned.</p></div>
+        {% endfor %}
+    </div>
+
 </div>
 {% endblock %}

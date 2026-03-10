@@ -1,36 +1,90 @@
 {% extends 'main.html' %}
 
+{% block title %}Add Project — MONK{% endblock %}
+
 {% block content %}
-<div class="container">
-    <br>
-    <h2 class="text-center">Add Project</h2>
+<div class="container mt-4" style="max-width: 800px;">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'view_projects' %}">Projects</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Add Project</li>
+        </ol>
+    </nav>
+
+    <h2 class="text-center mb-4">Add Project</h2>
+
     <form method="POST" action="">
         {% csrf_token %}
-        
-        <label>REK nummer</label>
-        <input type="text" class="form-control" name="rekNummer" required/>
-        
-        <!-- Updated user selection -->
-        <label>User(s)</label>
-        <select name="users" class="form-control" multiple>
-            {% for user in users %}
-            <option value="{{user.id}}">{{user.name}} [{{user.id}}]</option>
-            {% endfor %}
-        </select>
-        
-        <!-- Updated Patient selection -->
-        <label>Subject(s)</label>
-        <select name="subjects" class="form-control" multiple>
-            {% for subject in subjects %}
-            <option value="{{subject.id}}">{{subject.file.title}} - {{subject.subject_id}} - [{{subject.id}}]</option>
-            {% endfor %}
-        </select>
-        
-        <label>Description</label>
-        <input type="text" class="form-control" name="description" required/>
-        
-        <br>
-        <input type="submit" value="Submit" class="form-control btn btn-primary" />
+
+        <div class="mb-3">
+            <label for="rekNummer" class="form-label">REK Number</label>
+            <input type="text" class="form-control" id="rekNummer" name="rekNummer"
+                   placeholder="e.g. REK-2024/123" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <input type="text" class="form-control" id="description" name="description"
+                   placeholder="Brief description of the project" required>
+        </div>
+
+        <!-- User selection -->
+        <div class="mb-3">
+            <label class="form-label">Users</label>
+            <input type="text" class="form-control form-control-sm mb-2" id="userFilter"
+                   placeholder="Filter users…" aria-label="Filter users">
+            <div class="border rounded p-2" style="max-height: 200px; overflow-y: auto;" id="userList">
+                {% for user in users %}
+                <div class="form-check user-item">
+                    <input class="form-check-input" type="checkbox" name="users"
+                           value="{{ user.id }}" id="user{{ user.id }}">
+                    <label class="form-check-label" for="user{{ user.id }}">{{ user.name }}</label>
+                </div>
+                {% empty %}
+                <p class="text-muted small mb-0">No users available.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Subject selection -->
+        <div class="mb-3">
+            <label class="form-label">Subjects</label>
+            <input type="text" class="form-control form-control-sm mb-2" id="subjectFilter"
+                   placeholder="Filter subjects…" aria-label="Filter subjects">
+            <div class="border rounded p-2" style="max-height: 200px; overflow-y: auto;" id="subjectList">
+                {% for subject in subjects %}
+                <div class="form-check subject-item">
+                    <input class="form-check-input" type="checkbox" name="subjects"
+                           value="{{ subject.id }}" id="subject{{ subject.id }}">
+                    <label class="form-check-label" for="subject{{ subject.id }}">
+                        {{ subject.file.title }} — {{ subject.name|default:subject.subject_id }}
+                    </label>
+                </div>
+                {% empty %}
+                <p class="text-muted small mb-0">No subjects available.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="d-grid">
+            <input type="submit" value="Create Project" class="btn btn-primary">
+        </div>
     </form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function bindFilter(inputId, listId, itemClass) {
+        document.getElementById(inputId).addEventListener('input', function () {
+            var q = this.value.toLowerCase();
+            document.querySelectorAll('#' + listId + ' .' + itemClass).forEach(function (item) {
+                item.style.display = item.textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
+        });
+    }
+    bindFilter('userFilter', 'userList', 'user-item');
+    bindFilter('subjectFilter', 'subjectList', 'subject-item');
+</script>
 {% endblock %}

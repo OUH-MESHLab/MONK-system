@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import File
+from .models import File, UserProfile
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
@@ -39,9 +39,35 @@ class FileFieldForm(forms.Form):
     file_field = MultipleFileField(help_text="Upload one or more '.mwf' files.")
 
 class UserRegistrationForm(UserCreationForm):
-    name = forms.CharField(max_length=50, help_text='Required. Add your full name.')
-    mobile = forms.CharField(max_length=20, help_text='Required. Add a contact number.')
-    
+    name = forms.CharField(
+        max_length=50,
+        help_text='Required. Add your full name.',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full name'}),
+    )
+    mobile = forms.CharField(
+        max_length=20,
+        help_text='Required. Add a contact number.',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Mobile number'}),
+    )
+
     class Meta:
         model = User
         fields = ['username', 'name', 'mobile', 'password1', 'password2']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Choose a username'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['password1'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Enter password'})
+        self.fields['password2'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Confirm password'})
+
+
+class EditProfileForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['name', 'mobile']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full name'}),
+            'mobile': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Mobile number'}),
+        }

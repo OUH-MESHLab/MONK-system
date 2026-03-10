@@ -1,0 +1,36 @@
+{% extends 'main.html' %}
+
+{% block title %}Edit Profile — MONK{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 500px;">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'user' request.user.userprofile.id %}">My Profile</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Edit</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm">
+        <div class="card-header"><h5 class="mb-0">Edit Profile</h5></div>
+        <div class="card-body">
+            <form method="POST" action="">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="id_name" class="form-label">Full Name</label>
+                    {{ form.name }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_mobile" class="form-label">Mobile</label>
+                    {{ form.mobile }}
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

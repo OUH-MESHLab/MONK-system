@@ -209,7 +209,9 @@ def plot_graph(request, file_id):
         finally:
             os.unlink(tmp_path)
 
-        df = df.apply(pd.to_numeric, errors="coerce").interpolate().dropna()
+        df = df.apply(pd.to_numeric, errors="coerce")
+        df = df.dropna(axis=1, how="all")  # drop channels with no data at all
+        df = df.ffill().bfill()            # fill gaps from multi-rate channels
 
         if combined:
             fig = go.Figure()

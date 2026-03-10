@@ -1,6 +1,8 @@
 from django.db import models
 from django import forms
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 import uuid
 import os
 from django.utils.timezone import now
@@ -69,3 +71,13 @@ class FileImport(models.Model):
 
     def __str__(self):
         return f"{self.file.title} imported by {self.user.name}"
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Ensure every User always has a UserProfile, regardless of how it was created."""
+    if created:
+        UserProfile.objects.get_or_create(
+            user=instance,
+            defaults={"name": instance.username, "mobile": ""},
+        )

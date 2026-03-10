@@ -1,96 +1,46 @@
 {% extends 'main.html' %}
 
-{% block content %}
+{% block title %}Subject {{ subject.subject_id }} — MONK{% endblock %}
 
-<div class="container mt-5">
-    <div class="card">
+{% block content %}
+<div class="container mt-4">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'view_subjects' %}">Subjects</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ subject.subject_id }}</li>
+        </ol>
+    </nav>
+
+    <div class="card mb-4">
         <h5 class="card-header">Subject Details</h5>
         <div class="card-body">
-            <p class="card-text"><strong><i class="bi bi-person-square" style="margin-right: 10px;"></i>ID:</strong> {{ subject.subject_id|default:"Not available" }}</p>
-            <p class="card-title"><strong><i class="bi bi-person-circle" style="margin-right: 10px;"></i>Name:</strong> {{ subject.name|default:"Not available" }}</p>
-            <p class="card-text"><strong><i class="bi bi-gender-ambiguous" style="margin-right: 10px;"></i>Gender:</strong> {{ subject.gender|default:"Not available" }}</p>
-            <p class="card-text">
-                <strong><i class="bi bi-calendar-event" style="margin-right: 10px;"></i>Birth Date:</strong> {{ subject.birth_date|date:"Y-m-d"|default:"Not available" }}
-            </p>
+            <p class="card-text"><strong><i class="bi bi-person-square me-2"></i>ID:</strong> {{ subject.subject_id|default:"Not available" }}</p>
+            <p class="card-text"><strong><i class="bi bi-person-circle me-2"></i>Name:</strong> {{ subject.name|default:"Not available" }}</p>
+            <p class="card-text"><strong><i class="bi bi-gender-ambiguous me-2"></i>Gender:</strong> {{ subject.gender|default:"Not available" }}</p>
+            <p class="card-text"><strong><i class="bi bi-calendar-event me-2"></i>Birth Date:</strong> {{ subject.birth_date|date:"Y-m-d"|default:"Not available" }}</p>
         </div>
-    
-    <!--
+        {% if subject.file %}
         <div class="card-footer">
-        
-                <div class="form-group">
-                    <label for="combined-checkbox"><i class="bi bi-diagram-3" style="margin-right: 10px;"></i>Combined Graph:</label>
-                    <input type="checkbox" id="combined-checkbox" name="combined">
-                </div>
-                <div class="form-group">
-                    <label for="rows-input"><i class="bi bi-list-ol" style="margin-right: 10px;"></i>Number of Rows:</label>
-                    <input type="number" id="rows-input" name="rows" value="10000" min="1">
-                </div>
-                
-                <div class="card-footer">
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                        <button id="plot-graph" class="btn btn-primary btn-lg" data-file-id="{{ subject.file.id }}" style="width: 55%; margin-bottom: 15px;">
-                            View vitals</button>
-                        
-                        {% if subject.file %}
-                        <a href="{% url 'file' subject.file.id %}" class="btn btn-secondary btn-lg" style="width: 55%;">
-                            View associated file</a>
-                        {% else %}
-                        <p>No associated file found.</p>
-                        {% endif %}
-                    </div>
-                </div>
-
-            </div>
-            
-            <div>
-                <div id="graph-container" class="mt-4"></div>
-                <div id="loading-message" style="display:none;" class="alert alert-info">Loading... <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            </div>
+            <a href="{% url 'file' subject.file.id %}" class="btn btn-primary btn-sm">
+                <i class="bi bi-file-earmark me-1"></i>View Associated File: {{ subject.file.title }}
+            </a>
         </div>
-    -->
-</div>
+        {% endif %}
+    </div>
+
+    {% if subject.projects.all %}
+    <div class="card">
+        <h6 class="card-header"><i class="bi bi-briefcase me-2"></i>Projects</h6>
+        <ul class="list-group list-group-flush">
+            {% for proj in subject.projects.all %}
+            <li class="list-group-item">
+                <a href="{% url 'project' proj.id %}">{{ proj.rekNummer }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
 
 </div>
-
-<!--
-<script>
-    document.getElementById('plot-graph').addEventListener('click', function() {
-        var file_id = this.getAttribute('data-file-id');
-        var combined = document.getElementById('combined-checkbox').checked ? 'true' : 'false';
-        var rows = document.getElementById('rows-input').value;
-
-        var url = `/plot_graph/${file_id}/?combined=${combined}&rows=${rows}`;
-        
-        // Show loading message
-        var loadingMessage = document.getElementById('loading-message');
-        loadingMessage.style.display = 'block';
-
-        fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok: ' + response.statusText);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.error) {
-                console.error('Error:', data.error);
-            } else {
-                var plotWindow = window.open("", "_blank", "width=800,height=600");
-                plotWindow.document.write('<html><head><title>Plot Graph</title><script src="https://cdn.plot.ly/plotly-latest.min.js"><\/script></head><body>' + data.graph_html + '</body></html>');
-                plotWindow.document.close();
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        })
-        .finally(() => {
-            // Hide loading message
-            loadingMessage.style.display = 'none';
-        });
-    });
-</script>
-
--->
-
 {% endblock %}

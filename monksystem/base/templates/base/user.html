@@ -1,15 +1,49 @@
 {% extends 'main.html' %}
 
+{% block title %}{{ user.name }} — MONK{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <div class="card">
-        <h5 class="card-header">User Details</h5>
+<div class="container mt-4">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'view_projects' %}">Projects</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ user.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-person-circle me-2"></i>{{ user.name }}</h5>
+            {% if request.user.userprofile == user %}
+            <a href="{% url 'edit_profile' %}" class="btn btn-outline-secondary btn-sm">Edit Profile</a>
+            {% endif %}
+        </div>
         <div class="card-body">
-            <h5 class="card-title">{{ user.name }}</h5>
-            <p class="card-text"><strong><i class="bi bi-card-heading" style="margin-right: 5px;"></i>ID:</strong> {{ user.id }}</p> 
-            <p class="card-text"><strong><i class="bi bi-person-badge" style="margin-right: 5px;"></i>Username:</strong> {{ user.user.username }}</p>
-            <p class="card-text"><strong><i class="bi bi-telephone-fill" style="margin-right: 5px;"></i>Contact:</strong> {{ user.mobile }}</p>
+            <p class="card-text">
+                <strong><i class="bi bi-person-badge me-2"></i>Username:</strong> {{ user.user.username }}
+            </p>
+            {% if user.mobile %}
+            <p class="card-text">
+                <strong><i class="bi bi-telephone-fill me-2"></i>Contact:</strong>
+                <a href="tel:{{ user.mobile }}">{{ user.mobile }}</a>
+            </p>
+            {% endif %}
         </div>
     </div>
+
+    {% if shared_projects %}
+    <div class="card">
+        <h6 class="card-header"><i class="bi bi-briefcase me-2"></i>Shared Projects</h6>
+        <ul class="list-group list-group-flush">
+            {% for proj in shared_projects %}
+            <li class="list-group-item">
+                <a href="{% url 'project' proj.id %}">{{ proj.rekNummer }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
 </div>
 {% endblock %}
