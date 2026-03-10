@@ -131,7 +131,11 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        # Serve pre-compressed (Brotli/Gzip) static files via whitenoise.
+        # No content-hash manifest — not needed for an airgapped kiosk and
+        # avoids collectstatic failures when CSS references font variants
+        # (e.g. legacy .woff fallbacks) that are not committed to the repo.
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
