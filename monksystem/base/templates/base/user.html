@@ -23,10 +23,10 @@
             <p class="card-text">
                 <strong><i class="bi bi-person-badge me-2"></i>Username:</strong> {{ user.user.username }}
             </p>
-            {% if user.mobile %}
+            {% if user.email %}
             <p class="card-text">
-                <strong><i class="bi bi-telephone-fill me-2"></i>Contact:</strong>
-                <a href="tel:{{ user.mobile }}">{{ user.mobile }}</a>
+                <strong><i class="bi bi-envelope-fill me-2"></i>Email:</strong>
+                <a href="mailto:{{ user.email }}">{{ user.email }}</a>
             </p>
             {% endif %}
         </div>

@@ -159,7 +159,7 @@ def register_page(request):
                 user=user,
                 defaults={
                     "name": form.cleaned_data.get("name"),
-                    "mobile": form.cleaned_data.get("mobile"),
+                    "email": form.cleaned_data.get("email", ""),
                 },
             )
             login(request, user)

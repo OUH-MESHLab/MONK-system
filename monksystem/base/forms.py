@@ -44,15 +44,15 @@ class UserRegistrationForm(UserCreationForm):
         help_text='Required. Add your full name.',
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full name'}),
     )
-    mobile = forms.CharField(
-        max_length=20,
-        help_text='Required. Add a contact number.',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Mobile number'}),
+    email = forms.EmailField(
+        required=False,
+        help_text='Optional. Add a contact email.',
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email address'}),
     )
 
     class Meta:
         model = User
-        fields = ['username', 'name', 'mobile', 'password1', 'password2']
+        fields = ['username', 'name', 'email', 'password1', 'password2']
         widgets = {
             'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Choose a username'}),
         }
@@ -66,8 +66,8 @@ class UserRegistrationForm(UserCreationForm):
 class EditProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['name', 'mobile']
+        fields = ['name', 'email']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full name'}),
-            'mobile': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Mobile number'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email address'}),
         }

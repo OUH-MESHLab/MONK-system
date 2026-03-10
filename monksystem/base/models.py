@@ -13,7 +13,7 @@ from django.utils.timezone import now
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null = True, related_name='userprofile')
     name = models.CharField(max_length=50)
-    mobile = models.CharField(max_length=20)
+    email = models.EmailField(blank=True)
     
     def __str__(self):
         return self.name
@@ -79,5 +79,5 @@ def create_user_profile(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.get_or_create(
             user=instance,
-            defaults={"name": instance.username, "mobile": ""},
+            defaults={"name": instance.username, "email": ""},
         )

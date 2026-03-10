@@ -54,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'base.middleware.NoCacheMiddleware',
 ]
 
 ROOT_URLCONF = 'monksystem.urls'
@@ -71,6 +72,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'monksystem.context_processors.idle_logout',
             ],
         },
     },
@@ -151,3 +153,15 @@ FILE_IMPORT_BASE_DIR = os.environ.get('MONK_IMPORT_BASE_DIR', '')
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Session security
+# Expire the server-side session after 15 minutes of inactivity.
+# SESSION_SAVE_EVERY_REQUEST resets the clock on each request so only
+# genuine inactivity triggers expiry.
+SESSION_COOKIE_AGE = 900            # 15 minutes
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# Idle logout timeout (seconds) passed to the JS idle timer in main.html.
+# Must match or be shorter than SESSION_COOKIE_AGE.
+IDLE_LOGOUT_SECONDS = 900

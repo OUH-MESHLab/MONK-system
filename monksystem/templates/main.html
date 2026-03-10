@@ -27,5 +27,23 @@
     <script src="{% static 'base/js/bootstrap.bundle.min.js' %}"></script>
     {% block scripts %}{% endblock %}
 
+    {% if user.is_authenticated %}
+    <script>
+    /* Auto-logout after {{ IDLE_LOGOUT_SECONDS }}s of no mouse/keyboard activity. */
+    (function () {
+      var deadline = Date.now() + {{ IDLE_LOGOUT_SECONDS }} * 1000;
+      function reset() { deadline = Date.now() + {{ IDLE_LOGOUT_SECONDS }} * 1000; }
+      ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'].forEach(function (e) {
+        document.addEventListener(e, reset, { passive: true });
+      });
+      setInterval(function () {
+        if (Date.now() >= deadline) {
+          window.location.href = "{% url 'logout' %}";
+        }
+      }, 10000); /* check every 10 s */
+    })();
+    </script>
+    {% endif %}
+
   </body>
 </html>
