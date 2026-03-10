@@ -423,6 +423,7 @@ def import_from_directory(request):
                 new_file = File.objects.create(file=django_file, title=title)
                 FileImport.objects.create(user=user_profile, file=new_file)
                 process_and_create_subject(new_file, request)
+            safe_path.unlink(missing_ok=True)
             imported += 1
 
         if imported:
