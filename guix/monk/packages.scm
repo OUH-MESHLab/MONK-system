@@ -6,18 +6,15 @@
 
 (define-module (monk packages)
   #:use-module (guix packages)
+  #:use-module (guix utils)
   #:use-module (guix git-download)
   #:use-module (guix gexp)
+  #:use-module (guix build-system cmake)
   #:use-module (guix build-system python)
   #:use-module ((guix licenses) #:prefix license:)
-  ;; Build tools
-  #:use-module (gnu packages cmake)
-  #:use-module (gnu packages ninja)
-  #:use-module (gnu packages commencement)  ; gcc-toolchain
   ;; Python infrastructure
   #:use-module (gnu packages python)
-  #:use-module (gnu packages python-build)  ; python-setuptools
-  #:use-module (gnu packages python-xyz)    ; python-numpy, python-wheel
+  #:use-module (gnu packages python-xyz)    ; pybind11, python-numpy, python-wheel
   #:use-module (gnu packages python-science) ; python-pandas, python-plotly
   #:use-module (gnu packages python-web)    ; python-asgiref, gunicorn
   #:use-module (gnu packages django)        ; python-django
@@ -31,31 +28,33 @@
 (define-public python-monklib
   (package
     (name "python-monklib")
-    (version "0.1.0")
+    (version "0.2.4")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/OUH-MESHLab/MONK-library.git")
-             (commit "cd4224e04841d39a1cb65ccefa19ace01705566d")
-             ;; pybind11 is a bundled git submodule — must be fetched recursively.
-             (recursive? #t)))
+             (commit "7508918dae0286e0b24759137605e59a773c9a59")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1d1yzxs27rakr2p7xck1gxl4mkvjv8ysk0w10da4b14x5axl07mg"))))
-    (build-system python-build-system)
+        (base32 "1lj6h78n6kxvaz7jzh9jl9kff839bcpcijpvcvfirs38siwlwd9h"))))
+    (build-system cmake-build-system)
     (arguments
      (list
       #:tests? #f
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; The setup.py invokes cmake/ninja at build time.  They are on PATH
-          ;; via native-inputs so no extra configuration is needed.
-          (delete 'sanity-check))))
-    (native-inputs
-     ;; cmake and ninja are invoked as binaries by the CMakeExtension in
-     ;; setup.py — the Python "cmake" and "ninja" wheels are not needed.
-     (list cmake ninja gcc-toolchain python-setuptools python-wheel))
+      #:configure-flags
+      #~(list "-DMONK_PYTHON_BINDINGS=ON"
+              "-DMONK_BUILD_TOOLS=OFF"
+              "-DBUILD_TESTING=OFF"
+              ;; Override Python3_SITEARCH so the module installs under $out,
+              ;; not into the Python store path.
+              (string-append "-DPython3_SITEARCH="
+                             #$output
+                             "/lib/python"
+                             #$(version-major+minor (package-version python))
+                             "/site-packages"))))
+    (inputs (list python))
+    (native-inputs (list pybind11))
     (synopsis "MFER medical waveform parsing library (C++/pybind11)")
     (description
      "monklib is a C++ library with Python bindings (via pybind11) for reading
@@ -163,5 +162,5 @@ monk-manage migrate
 monk-manage createsuperuser
 monk-manage runserver
 @end example")
-    (home-page "https://github.com/MONK-system/MONK-system")
+    (home-page "https://github.com/OUH-MESHLab/MONK-library")
     (license license:expat)))

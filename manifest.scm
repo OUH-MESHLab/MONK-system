@@ -1,49 +1,49 @@
 ;;; Guix development environment for MONK-system.
 ;;; direnv loads this automatically via .envrc (use guix).
-;;; The .envrc handles building monklib (a C++/CMake extension not in Guix).
+;;;
+;;; python-monklib is loaded from guix/monk/packages.scm (the local channel
+;;; module), so no extra `guix pull` or global channel configuration is needed.
 
-(specifications->manifest
- '("gunicorn"
-   ;; Python runtime
-   "python"
+(add-to-load-path (string-append (dirname (current-filename)) "/guix"))
+(use-modules (monk packages))
 
-   ;; Django and web
-   "python-django"
-   "python-asgiref"
-   "python-sqlparse"
+(manifest
+ (append
+  (manifest-entries (packages->manifest (list python-monklib)))
+  (manifest-entries
+   (specifications->manifest
+    '("gunicorn"
+      ;; Python runtime
+      "python"
 
-   ;; Testing
-   "python-pytest"
-   "python-pytest-django"
-   "python-pytest-cov"
-   "python-coverage"
-   "python-selenium"
+      ;; Django and web
+      "python-django"
+      "python-asgiref"
+      "python-sqlparse"
 
-   ;; Data processing
-   "python-numpy"
-   "python-pandas"
-   "python-plotly"
-   "python-pytz"
-   "python-dateutil"
-   "python-tzdata"
+      ;; Testing
+      "python-pytest"
+      "python-pytest-django"
+      "python-pytest-cov"
+      "python-coverage"
+      "python-selenium"
 
-   ;; Code quality
-   "python-black"
-   "python-pylint"
-   "python-isort"
+      ;; Data processing
+      "python-numpy"
+      "python-pandas"
+      "python-plotly"
+      "python-pytz"
+      "python-dateutil"
+      "python-tzdata"
 
-   ;; Utilities
-   "python-click"
-   "python-six"
-   "python-packaging"
-   "python-tomlkit"
-   "python-attrs"
+      ;; Code quality
+      "python-black"
+      "python-pylint"
+      "python-isort"
 
-   ;; Build tools for compiling monklib (C++/CMake/pybind11 extension)
-   "cmake"
-   "ninja"
-   "gcc-toolchain"
-   "python-pip"
-
-   ;; For cloning monklib with submodules
-   "git"))
+      ;; Utilities
+      "python-click"
+      "python-six"
+      "python-packaging"
+      "python-tomlkit"
+      "python-attrs")))))
