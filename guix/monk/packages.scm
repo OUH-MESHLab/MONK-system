@@ -37,7 +37,7 @@
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/OUH-MESHLab/MONK-library.git")
-             (commit "91474f84e0137b89f257f110878558f6986447f4")
+             (commit "cd4224e04841d39a1cb65ccefa19ace01705566d")
              ;; pybind11 is a bundled git submodule — must be fetched recursively.
              (recursive? #t)))
        (file-name (git-file-name name version))
