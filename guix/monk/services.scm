@@ -209,7 +209,7 @@
               ;; Empty string leaves the feature disabled.
               (format port "FILE_IMPORT_BASE_DIR = ~s\n" #$import-dir))))
 
-        ;; ── Database migrations ─────────────────────────────────────────
+        ;; ── Database migrations + static files ──────────────────────────
         ;; Run every activation so new deployments and upgrades are
         ;; handled automatically.
         (setenv "DJANGO_SETTINGS_MODULE" "monk_settings")
@@ -221,6 +221,11 @@
         (let ((status (system* #$manage "migrate" "--no-input")))
           (unless (zero? (status:exit-val status))
             (error "monk: database migration failed")))
+        ;; Collect static assets into STATIC_ROOT so whitenoise can serve
+        ;; them without a CDN or nginx — required for airgapped deployments.
+        (let ((status (system* #$manage "collectstatic" "--no-input" "--clear")))
+          (unless (zero? (status:exit-val status))
+            (error "monk: collectstatic failed")))
 
         ;; ── Ownership ───────────────────────────────────────────────────
         ;; Give the monk daemon user ownership over all data directories.

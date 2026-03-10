@@ -16,7 +16,7 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-xyz)    ; pybind11, python-numpy, python-wheel
   #:use-module (gnu packages python-science) ; python-pandas, python-plotly
-  #:use-module (gnu packages python-web)    ; python-asgiref, gunicorn
+  #:use-module (gnu packages python-web)    ; python-asgiref, gunicorn, python-whitenoise
   #:use-module (gnu packages django)        ; python-django
   #:use-module (gnu packages databases)     ; python-sqlparse
   #:use-module (gnu packages time))         ; python-pytz, python-dateutil, python-tzdata
@@ -142,6 +142,7 @@ run()
      (list python-monklib
            gunicorn
            python-django
+           python-whitenoise
            python-numpy
            python-pandas
            python-plotly
