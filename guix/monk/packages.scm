@@ -42,7 +42,7 @@
              (recursive? #t)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "18pdnqzm5rw78g9pqh1k78xvk4dsyv96allfgk1ndj9pwndb3b0f"))))
+        (base32 "1d1yzxs27rakr2p7xck1gxl4mkvjv8ysk0w10da4b14x5axl07mg"))))
     (build-system python-build-system)
     (arguments
      (list
