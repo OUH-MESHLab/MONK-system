@@ -15,6 +15,7 @@ urlpatterns = [
     path('view_files/', views.view_files, name='view_files'),    
     path('import_file/', views.import_file, name='import_file'),
     path('import_multiple_files/', views.import_multiple_files, name='import_multiple_files'),
+    path('import_from_directory/', views.import_from_directory, name='import_from_directory'),
 
     path('user/<str:pk>', views.user, name="user"),
 

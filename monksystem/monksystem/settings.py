@@ -128,6 +128,11 @@ STATIC_URL = 'static/'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'nihon_kohden_files'
 
+# Directory from which clinicians can import .mwf files directly (no browser
+# file dialog).  Empty string disables the feature.  In production this is
+# overridden by monk_settings.py to point at the Samba incoming share.
+FILE_IMPORT_BASE_DIR = os.environ.get('MONK_IMPORT_BASE_DIR', '')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
