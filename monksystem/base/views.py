@@ -1,5 +1,8 @@
 import os
+from pathlib import Path
 
+from django.conf import settings
+from django.core.files import File as DjangoFile
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseForbidden
@@ -335,3 +338,81 @@ def import_multiple_files(request):
         else:
             messages.error(request, "Only .MWF files allowed.")
     return render(request, "base/import_file.html", {"form": form})
+
+
+def _safe_import_path(base_dir: str, name: str) -> Path:
+    """Return the resolved path for *name* inside *base_dir*.
+
+    Raises ValueError if the resolved path escapes *base_dir*, blocking any
+    directory-traversal attempt (e.g. '../../../etc/passwd').
+    """
+    base = Path(base_dir).resolve()
+    candidate = (base / name).resolve()
+    candidate.relative_to(base)  # raises ValueError if outside base
+    return candidate
+
+
+@login_required
+def import_from_directory(request):
+    """List .mwf files from FILE_IMPORT_BASE_DIR and import selected ones.
+
+    No browser file dialog is involved: files are read directly from the
+    server-side incoming directory (typically the Samba share).
+    """
+    base_dir = getattr(settings, "FILE_IMPORT_BASE_DIR", "")
+    if not base_dir:
+        messages.error(request, "Directory import is not configured on this server.")
+        return redirect("view_files")
+
+    if request.method == "POST":
+        filenames = request.POST.getlist("filenames")
+        if not filenames:
+            messages.error(request, "No files selected.")
+            return redirect("import_from_directory")
+
+        try:
+            user_profile = request.user.userprofile
+        except UserProfile.DoesNotExist:
+            messages.error(request, "You are not registered as a regular user.")
+            return redirect("view_files")
+
+        imported = 0
+        for name in filenames:
+            if not name.lower().endswith(".mwf"):
+                messages.error(request, f"Skipped non-.mwf file: {name}")
+                continue
+            try:
+                safe_path = _safe_import_path(base_dir, name)
+            except ValueError:
+                messages.error(request, f"Invalid filename rejected: {name}")
+                continue
+            if not safe_path.is_file():
+                messages.error(request, f"File no longer available: {name}")
+                continue
+            with open(safe_path, "rb") as fh:
+                django_file = DjangoFile(fh, name=safe_path.name)
+                title = safe_path.stem
+                new_file = File.objects.create(file=django_file, title=title)
+                FileImport.objects.create(user=user_profile, file=new_file)
+                process_and_create_subject(new_file, request)
+            imported += 1
+
+        if imported:
+            messages.success(request, f"{imported} file(s) imported successfully.")
+        return redirect("view_files")
+
+    # GET: list available .mwf files
+    try:
+        base_path = Path(base_dir).resolve()
+        available = sorted(
+            f.name for f in base_path.iterdir()
+            if f.is_file() and f.suffix.lower() == ".mwf"
+        )
+    except OSError as exc:
+        messages.error(request, f"Cannot read import directory: {exc}")
+        available = []
+
+    return render(request, "base/import_from_directory.html", {
+        "available_files": available,
+        "base_dir": base_dir,
+    })

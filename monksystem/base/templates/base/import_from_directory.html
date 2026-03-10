@@ -1,0 +1,58 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h2 class="text-center mb-3">Import from Incoming Directory</h2>
+            <p class="text-center text-muted">
+                Files available in <code>{{ base_dir }}</code>.
+                Select one or more .mwf files to import.
+            </p>
+
+            {% if available_files %}
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" action="{% url 'import_from_directory' %}">
+                        {% csrf_token %}
+                        <div class="list-group mb-3">
+                            {% for name in available_files %}
+                            <label class="list-group-item list-group-item-action">
+                                <input type="checkbox" name="filenames" value="{{ name }}" class="mr-2">
+                                {{ name }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="selectAll">
+                                Select all
+                            </button>
+                            <button type="submit" class="btn btn-primary">Import selected</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info text-center">
+                No .mwf files found in the incoming directory.
+            </div>
+            {% endif %}
+
+            <div class="text-center mt-3">
+                <a href="{% url 'import_file' %}" class="btn btn-link btn-sm">
+                    Upload a file instead
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('selectAll').addEventListener('click', function () {
+        var checkboxes = document.querySelectorAll('input[name="filenames"]');
+        var allChecked = Array.from(checkboxes).every(function (cb) { return cb.checked; });
+        checkboxes.forEach(function (cb) { cb.checked = !allChecked; });
+        this.textContent = allChecked ? 'Select all' : 'Deselect all';
+    });
+</script>
+{% endblock %}

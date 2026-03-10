@@ -23,6 +23,7 @@
             monk-configuration-secret-key
             monk-configuration-allowed-hosts
             monk-configuration-data-directory
+            monk-configuration-file-import-base-dir
             monk-configuration-user
             monk-configuration-group
             monk-service-type))
@@ -48,6 +49,10 @@
   (allowed-hosts   monk-configuration-allowed-hosts    (default '("localhost" "127.0.0.1")))
   ;; Directory for the SQLite database and uploaded media files.
   (data-directory  monk-configuration-data-directory   (default "/var/lib/monk"))
+  ;; Directory from which clinicians can import .mwf files directly via the
+  ;; web UI, bypassing the browser file dialog.  Typically the Samba incoming
+  ;; share.  Empty string disables the feature.
+  (file-import-base-dir monk-configuration-file-import-base-dir (default ""))
   ;; System user and group the daemon runs as.
   (user            monk-configuration-user             (default "monk"))
   (group           monk-configuration-group            (default "monk")))
@@ -137,12 +142,13 @@
 ;;;
 
 (define (monk-activation config)
-  (let* ((pkg      (monk-configuration-package config))
-         (manage   (file-append pkg "/bin/monk-manage"))
-         (data-dir (monk-configuration-data-directory config))
-         (user     (monk-configuration-user config))
-         (secret   (monk-configuration-secret-key config))
-         (hosts    (monk-configuration-allowed-hosts config)))
+  (let* ((pkg        (monk-configuration-package config))
+         (manage     (file-append pkg "/bin/monk-manage"))
+         (data-dir   (monk-configuration-data-directory config))
+         (user       (monk-configuration-user config))
+         (secret     (monk-configuration-secret-key config))
+         (hosts      (monk-configuration-allowed-hosts config))
+         (import-dir (monk-configuration-file-import-base-dir config)))
     (with-imported-modules '((guix build utils))
       #~(begin
         (use-modules (guix build utils)
@@ -198,7 +204,10 @@
                       (string-append #$data-dir "/media/"))
               (format port "MEDIA_URL   = '/media/'\n")
               (format port "STATIC_ROOT = ~s\n"
-                      (string-append #$data-dir "/static/")))))
+                      (string-append #$data-dir "/static/"))
+              ;; Server-side directory import (bypasses browser file dialog).
+              ;; Empty string leaves the feature disabled.
+              (format port "FILE_IMPORT_BASE_DIR = ~s\n" #$import-dir))))
 
         ;; ── Database migrations ─────────────────────────────────────────
         ;; Run every activation so new deployments and upgrades are
