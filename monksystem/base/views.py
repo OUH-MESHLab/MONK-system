@@ -327,7 +327,8 @@ def import_file(request):
             return redirect("view_files")
         else:
             messages.error(request, "Please choose title and upload .MWF files only")
-    return render(request, "base/import_file.html", {"form": form})
+    server_import = bool(getattr(settings, "FILE_IMPORT_BASE_DIR", ""))
+    return render(request, "base/import_file.html", {"form": form, "server_import": server_import})
 
 
 @login_required

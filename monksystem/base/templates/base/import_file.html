@@ -8,8 +8,10 @@
 
     <ul class="nav nav-tabs mb-0" id="importTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="single-tab" data-bs-toggle="tab" data-bs-target="#single"
-                    type="button" role="tab" aria-controls="single" aria-selected="true">
+            <button class="nav-link{% if not server_import %} active{% endif %}" id="single-tab"
+                    data-bs-toggle="tab" data-bs-target="#single"
+                    type="button" role="tab" aria-controls="single"
+                    aria-selected="{% if not server_import %}true{% else %}false{% endif %}">
                 <i class="bi bi-file-earmark-plus me-1"></i>Single File
             </button>
         </li>
@@ -20,8 +22,10 @@
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="dir-tab" data-bs-toggle="tab" data-bs-target="#dir"
-                    type="button" role="tab" aria-controls="dir" aria-selected="false">
+            <button class="nav-link{% if server_import %} active{% endif %}" id="dir-tab"
+                    data-bs-toggle="tab" data-bs-target="#dir"
+                    type="button" role="tab" aria-controls="dir"
+                    aria-selected="{% if server_import %}true{% else %}false{% endif %}">
                 <i class="bi bi-folder2-open me-1"></i>From Server
             </button>
         </li>
@@ -30,7 +34,15 @@
     <div class="tab-content border border-top-0 rounded-bottom p-4" id="importTabsContent">
 
         <!-- Single file tab -->
-        <div class="tab-pane fade show active" id="single" role="tabpanel" aria-labelledby="single-tab">
+        <div class="tab-pane fade{% if not server_import %} show active{% endif %}" id="single"
+             role="tabpanel" aria-labelledby="single-tab">
+            {% if server_import %}
+            <div class="alert alert-warning d-flex align-items-center" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Browser file dialogs are not available in kiosk mode.
+                Use the <strong>&nbsp;From Server&nbsp;</strong> tab to import files.
+            </div>
+            {% else %}
             <p class="text-muted small">Provide a title and select a single .mwf file to import.</p>
             <form method="post" action="{% url 'import_file' %}" enctype="multipart/form-data">
                 {% csrf_token %}
@@ -50,10 +62,18 @@
                     </button>
                 </div>
             </form>
+            {% endif %}
         </div>
 
         <!-- Batch upload tab -->
         <div class="tab-pane fade" id="batch" role="tabpanel" aria-labelledby="batch-tab">
+            {% if server_import %}
+            <div class="alert alert-warning d-flex align-items-center" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Browser file dialogs are not available in kiosk mode.
+                Use the <strong>&nbsp;From Server&nbsp;</strong> tab to import files.
+            </div>
+            {% else %}
             <p class="text-muted small">Select multiple .mwf files to import at once. Titles are set from filenames.</p>
             <form method="post" action="{% url 'import_multiple_files' %}" enctype="multipart/form-data">
                 {% csrf_token %}
@@ -68,10 +88,12 @@
                     </button>
                 </div>
             </form>
+            {% endif %}
         </div>
 
         <!-- From server tab -->
-        <div class="tab-pane fade" id="dir" role="tabpanel" aria-labelledby="dir-tab">
+        <div class="tab-pane fade{% if server_import %} show active{% endif %}" id="dir"
+             role="tabpanel" aria-labelledby="dir-tab">
             <p class="text-muted small">
                 Import .mwf files directly from the configured server directory
                 (e.g. a Samba share), without a browser file dialog.
