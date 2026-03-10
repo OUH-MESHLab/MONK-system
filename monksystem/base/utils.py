@@ -1,4 +1,5 @@
 import os
+import re
 import tempfile
 from datetime import datetime
 
@@ -213,24 +214,63 @@ def plot_graph(request, file_id):
         df = df.dropna(axis=1, how="all")  # drop channels with no data at all
         df = df.ffill().bfill()            # fill gaps from multi-rate channels
 
+        # Use the time column as x-axis if present, otherwise fall back to row index
+        time_col = next((c for c in df.columns if c.strip().lower().startswith("time")), None)
+        x = df[time_col] if time_col is not None else df.index
+        x_label = "Time (s)" if time_col is not None else "Index"
+        signal_cols = [c for c in df.columns if c != time_col]
+
+        # Parse "NAME: MANTISSAx10^EXP (UNIT)" column headers to scale to physical units
+        _col_re = re.compile(r"^\s*(.+?):\s*([\d.]+)x10\^(-?\d+)\s*\((.+?)\)\s*$")
+
+        def _parse_col(col):
+            m = _col_re.match(col)
+            if m:
+                name, mantissa, exp, unit = m.group(1), float(m.group(2)), int(m.group(3)), m.group(4)
+                return name.strip(), mantissa * 10 ** exp, unit.strip()
+            return col.strip(), 1.0, ""
+
+        _SI = [(1e12,"T"),(1e9,"G"),(1e6,"M"),(1e3,"k"),(1,""),(1e-3,"m"),(1e-6,"μ"),(1e-9,"n"),(1e-12,"p")]
+
+        def _human_scale(series, unit):
+            """Rescale series to a human-readable SI range; return (scaled_series, new_unit)."""
+            max_abs = series.abs().max()
+            if max_abs == 0 or pd.isna(max_abs):
+                return series, unit
+            for factor, prefix in _SI:
+                if max_abs >= factor * 0.5:
+                    return series / factor, f"{prefix}{unit}"
+            return series, unit
+
         if combined:
             fig = go.Figure()
-            for column in df.columns:
-                fig.add_trace(
-                    go.Scatter(x=df.index, y=df[column], mode="lines", name=column)
-                )
+            for column in signal_cols:
+                name, mult, unit = _parse_col(column)
+                y, scaled_unit = _human_scale(df[column] * mult, unit)
+                label = f"{name} ({scaled_unit})" if scaled_unit else name
+                fig.add_trace(go.Scatter(x=x, y=y, mode="lines", name=label))
             fig.update_layout(
-                title="Combined Graph", xaxis_title="Index", yaxis_title="Values"
+                title="Combined Graph", xaxis_title=x_label, yaxis_title="Values"
             )
         else:
-            fig = make_subplots(rows=len(df.columns), cols=1, shared_xaxes=True)
-            for i, column in enumerate(df.columns):
+            fig = make_subplots(
+                rows=len(signal_cols), cols=1, shared_xaxes=True,
+                subplot_titles=[_parse_col(c)[0] for c in signal_cols],
+            )
+            for i, column in enumerate(signal_cols):
+                name, mult, unit = _parse_col(column)
+                y, scaled_unit = _human_scale(df[column] * mult, unit)
+                label = f"{name} ({scaled_unit})" if scaled_unit else name
                 fig.add_trace(
-                    go.Scatter(x=df.index, y=df[column], mode="lines", name=column),
-                    row=i + 1,
-                    col=1,
+                    go.Scatter(x=x, y=y, mode="lines", name=label),
+                    row=i + 1, col=1,
                 )
-            fig.update_layout(title="Multiple Subplots Graph")
+                fig.update_yaxes(title_text=scaled_unit, row=i + 1, col=1)
+            fig.update_layout(title="Waveform", height=300 * len(signal_cols))
+
+        # Apply to ALL axes — for_each_* guarantees every subplot axis is reached
+        fig.for_each_yaxis(lambda ax: ax.update(exponentformat="none", tickformat=".6~g"))
+        fig.for_each_xaxis(lambda ax: ax.update(exponentformat="none", tickformat=".6~g"))
 
         graph_html = fig.to_html(full_html=False, include_plotlyjs=True)
         return JsonResponse({"graph_html": graph_html})

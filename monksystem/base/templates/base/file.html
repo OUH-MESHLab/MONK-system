@@ -202,13 +202,10 @@
             })
             .then(data => {
                 if (!data.error) {
-                    var plotWindow = window.open("", "_blank", "width=800,height=600");
-                    plotWindow.document.write(
-                        '<html><head><title>Plot Graph</title>' +
-                        '<script src="https://cdn.plot.ly/plotly-latest.min.js"><\/script>' +
-                        '</head><body>' + data.graph_html + '</body></html>'
-                    );
-                    plotWindow.document.close();
+                    var html = '<html><head><meta charset="utf-8"><title>Plot Graph</title></head><body>' + data.graph_html + '</body></html>';
+                    var blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+                    var url = URL.createObjectURL(blob);
+                    window.open(url, '_blank');
                 }
             })
             .catch(error => console.error('Error:', error))
