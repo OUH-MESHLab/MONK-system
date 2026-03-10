@@ -2,48 +2,65 @@
 
 {% load static %}
 
-{% block content %}
+{% block title %}Home — MONK{% endblock %}
 
+{% block content %}
 <div class="container mt-5">
 
-    <div class="jumbotron text-center bg-primary text-white">
-        <h1>Welcome to Our HealthCare System</h1>
-        <p>Providing compassionate care and comprehensive services to our community.</p>
+    <div class="p-4 mb-4 bg-dark text-white rounded">
+        <h1 class="mb-2">MONK</h1>
+        <p class="mb-0 text-white-50">
+            Medical waveform management for Nihon-Kohden MFER data.
+            Import, organize, visualize, and export ECG and vital-sign recordings.
+        </p>
     </div>
 
-    <div class="row text-center">
+    <div class="row text-center g-4">
 
-        <div class="col-md-6 mb-4">
+        <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-body">
+                    <i class="bi bi-cloud-upload fs-2 text-primary mb-2"></i>
+                    <h3 class="card-title">Import Files</h3>
+                    <p class="card-text">Upload .mwf waveform files from your computer or a server directory.</p>
+                    <a href="{% url 'import_file' %}" class="btn btn-primary">Import</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <i class="bi bi-file-earmark-medical fs-2 text-primary mb-2"></i>
                     <h3 class="card-title">View Files</h3>
-                    <p class="card-text">Access and manage subject files and records.</p>
-                    <a href="{% url 'view_files' %}" class="btn btn-primary">Explore</a>
+                    <p class="card-text">Browse, visualize, and export your imported waveform recordings.</p>
+                    <a href="{% url 'view_files' %}" class="btn btn-primary">Browse</a>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-6 mb-4">
+        <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-body">
+                    <i class="bi bi-briefcase fs-2 text-primary mb-2"></i>
                     <h3 class="card-title">View Projects</h3>
-                    <p class="card-text">Discover our ongoing projects.</p>
-                    <a href="{% url 'view_projects' %}" class="btn btn-primary">Explore</a>
+                    <p class="card-text">Manage research projects and control access to subjects and recordings.</p>
+                    <a href="{% url 'view_projects' %}" class="btn btn-primary">Projects</a>
                 </div>
             </div>
         </div>
 
-        
-        <div class="col-md-6 mb-4">
+        <div class="col-md-6">
             <div class="card h-100">
                 <div class="card-body">
+                    <i class="bi bi-journal-bookmark fs-2 text-primary mb-2"></i>
                     <h3 class="card-title">View Subjects</h3>
-                    <p class="card-text">Learn more about our subjects and their experiences.</p>
-                    <a href="{% url 'view_subjects' %}" class="btn btn-primary">Explore</a>
+                    <p class="card-text">Explore subject records extracted from imported waveform file headers.</p>
+                    <a href="{% url 'view_subjects' %}" class="btn btn-primary">Subjects</a>
                 </div>
             </div>
         </div>
+
     </div>
 </div>
-
 {% endblock %}

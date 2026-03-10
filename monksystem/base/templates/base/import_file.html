@@ -1,67 +1,86 @@
 {% extends 'main.html' %}
 
+{% block title %}Import Files — MONK{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <h2 class="text-center mb-3">Import File</h2>
-            <p class="text-center">Provide a title for your file and select the file to import.</p>
-            <div class="card">
-                <div class="card-body">
-                    <form method="post" action="{% url 'import_file' %}" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        {% for field in form %}
-                            <div class="form-group">
-                                {% if field.name == 'title' %}
-                                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                    <input type="text" class="form-control" id="{{ field.id_for_label }}" name="{{ field.name }}" placeholder="Enter a title for your file">
-                                {% elif field.name == 'file' %}
-                                    <div class="custom-file mt-3 mb-4">
-                                        <input type="file" class="custom-file-input" id="{{ field.id_for_label }}" name="{{ field.name }}">
-                                        <label class="custom-file-label" for="{{ field.id_for_label }}">Choose file...</label>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                        <input type="hidden" name="submitted" value="true">
-                            <div class="text-center">
-                                <button type="submit" class="btn btn-primary">Import File</button>
-                            </div>
-                    </form>
+<div class="container mt-4" style="max-width: 700px;">
+    <h2 class="text-center mb-4">Import Files</h2>
+
+    <ul class="nav nav-tabs mb-0" id="importTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="single-tab" data-bs-toggle="tab" data-bs-target="#single"
+                    type="button" role="tab" aria-controls="single" aria-selected="true">
+                <i class="bi bi-file-earmark-plus me-1"></i>Single File
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="batch-tab" data-bs-toggle="tab" data-bs-target="#batch"
+                    type="button" role="tab" aria-controls="batch" aria-selected="false">
+                <i class="bi bi-files me-1"></i>Batch Upload
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="dir-tab" data-bs-toggle="tab" data-bs-target="#dir"
+                    type="button" role="tab" aria-controls="dir" aria-selected="false">
+                <i class="bi bi-folder2-open me-1"></i>From Server
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content border border-top-0 rounded-bottom p-4" id="importTabsContent">
+
+        <!-- Single file tab -->
+        <div class="tab-pane fade show active" id="single" role="tabpanel" aria-labelledby="single-tab">
+            <p class="text-muted small">Provide a title and select a single .mwf file to import.</p>
+            <form method="post" action="{% url 'import_file' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="id_title" class="form-label">Title</label>
+                    <input type="text" class="form-control" id="id_title" name="title"
+                           placeholder="Enter a title for your file">
                 </div>
-            </div>
-            <h2 class="text-center mt-5 mb-3">Import Multiple Files</h2>
-            <p class="text-center">Select multiple files to import at once.</p>
-            <div class="card">
-                <div class="card-body">
-                    <form method="post" action="{% url 'import_multiple_files' %}" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <div class="custom-file mt-3 mb-4">
-                            <input type="file" class="custom-file-input" id="multiFile" name="file_field" multiple>
-                            <label class="custom-file-label" for="multiFile">Choose files...</label>
-                        </div>
-                        <div class="text-center">
-                            <button type="submit" class="btn btn-primary">Import Files</button>
-                        </div>
-                    </form>
+                <div class="mb-3">
+                    <label for="id_file" class="form-label">File</label>
+                    <input type="file" class="form-control" id="id_file" name="file" accept=".mwf">
                 </div>
-            </div>
+                <input type="hidden" name="submitted" value="true">
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-upload me-1"></i>Import File
+                    </button>
+                </div>
+            </form>
         </div>
+
+        <!-- Batch upload tab -->
+        <div class="tab-pane fade" id="batch" role="tabpanel" aria-labelledby="batch-tab">
+            <p class="text-muted small">Select multiple .mwf files to import at once. Titles are set from filenames.</p>
+            <form method="post" action="{% url 'import_multiple_files' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="multiFile" class="form-label">Files</label>
+                    <input type="file" class="form-control" id="multiFile" name="file_field"
+                           multiple accept=".mwf">
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-upload me-1"></i>Import Files
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- From server tab -->
+        <div class="tab-pane fade" id="dir" role="tabpanel" aria-labelledby="dir-tab">
+            <p class="text-muted small">
+                Import .mwf files directly from the configured server directory
+                (e.g. a Samba share), without a browser file dialog.
+            </p>
+            <a href="{% url 'import_from_directory' %}" class="btn btn-outline-primary">
+                <i class="bi bi-folder2-open me-1"></i>Browse Server Directory
+            </a>
+        </div>
+
     </div>
 </div>
-
-<script>
-    // JavaScript for custom file input label
-    document.querySelectorAll('.custom-file-input').forEach(item => {
-        item.addEventListener('change', function(e) {
-            var fileNames = [];
-            for (var i = 0; i < e.target.files.length; i++) {
-                fileNames.push(e.target.files[i].name);
-            }
-            var label = e.target.nextElementSibling;
-            label.innerText = fileNames.join(', ');
-        });
-    });
-</script>
-
 {% endblock %}

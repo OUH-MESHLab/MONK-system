@@ -9,7 +9,7 @@
         {% for subject in subjects %}
         <div class="col-sm-12 col-md-6 col-lg-4 mb-4 d-flex align-items-stretch">
             <div class="card shadow-sm w-100">
-                <a class="card-header bg-info text-white">
+                <a class="card-header bg-info text-white" href="{% url 'subject' subject.subject_id %}">
                     <i class="bi bi-card-heading" style="margin-right: 10px;"></i>
                     Subject ID: {{ subject.subject_id }}
                 </a>

@@ -11,11 +11,10 @@ class TestModels(TestCase):
         # User object
         self.user = User.objects.create_user(username='testuser', password='12345')
 
-        # UserProfile object
-        self.user_profile = UserProfile.objects.create(
+        # UserProfile object (signal may have already created it)
+        self.user_profile, _ = UserProfile.objects.update_or_create(
             user=self.user,
-            name='Test User',
-            mobile=123456789,
+            defaults={"name": "Test User", "mobile": "123456789"},
         )
 
         # File object with custom save method to set the title

@@ -1,65 +1,55 @@
-<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-
-<link rel = "stylesheet" href = "https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-<link rel = "stylesheet" href = "https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
-
-<script>
-$(document).ready(function() {
-    $('#example').DataTable( {
-        dom: 'Bfrtip',
-        buttons: [
-            'copyHtml5',
-            'excelHtml5',
-            'csvHtml5',
-            'pdfHtml5'
-        ]
-    } );
-} );
-</script>
-
-
 <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
-    <a href="/" class="navbar-brand">Health monitoring system</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#myMenu">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="myMenu">
-        <ul class="navbar-nav mr-auto">
-            {% if request.user.is_authenticated %}
+    <div class="container-fluid">
+        <a href="/" class="navbar-brand">MONK</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#myMenu"
+                aria-controls="myMenu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="myMenu">
+            <ul class="navbar-nav me-auto">
+                {% if request.user.is_authenticated %}
 
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">Files</a>
-                <div class="dropdown-menu">
-                    <a class="dropdown-item" href="{% url 'import_file' %}">Import files</a>
-                    <a class="dropdown-item" href="{% url 'view_files' %}">View files</a>
-                </div>
-            </li>
-            
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">Projects</a>
-                <div class="dropdown-menu">
-                    <a class="dropdown-item" href="{% url 'add_project' %}">Add Project</a>
-                    <a class="dropdown-item" href="{% url 'view_projects' %}">View Project</a>
-                </div>
-            </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Files</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'view_files' %}">View Files</a></li>
+                        <li><a class="dropdown-item" href="{% url 'import_file' %}">Import Files</a></li>
+                    </ul>
+                </li>
 
-            <li class="nav-item"><a class="nav-link" href="{% url 'view_subjects' %}">Subjects</a></li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Projects</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'view_projects' %}">View Projects</a></li>
+                        <li><a class="dropdown-item" href="{% url 'add_project' %}">Add Project</a></li>
+                    </ul>
+                </li>
 
-            {% endif %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'view_subjects' %}">Subjects</a></li>
 
-        </ul>
-        <ul class="navbar-nav ml-auto">
-            {% if request.user.is_authenticated %}
-            <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
-            {% else %}
-            <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
-            {% endif %}
-        </ul>
+                {% endif %}
+
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                {% if request.user.is_authenticated %}
+                {% if request.user.userprofile.id %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'user' request.user.userprofile.id %}">
+                        <i class="bi bi-person-circle me-1"></i>{{ request.user.userprofile.name }}
+                    </a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <span class="nav-link text-white-50">
+                        <i class="bi bi-person-circle me-1"></i>{{ request.user.username }}
+                    </span>
+                </li>
+                {% endif %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
+                {% else %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+                {% endif %}
+            </ul>
+        </div>
     </div>
 </nav>

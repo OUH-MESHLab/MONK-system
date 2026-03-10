@@ -11,7 +11,9 @@ class TestViews(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(username='testuser', email='test@example.com', password='password123')
-        self.user_profile = UserProfile.objects.create(user=self.user, name='Test User', mobile='123456789')
+        self.user_profile, _ = UserProfile.objects.update_or_create(
+            user=self.user, defaults={"name": "Test User", "mobile": "123456789"}
+        )
         
         # Create a temporary file that simulates a .mwf file
         self.temp_file = tempfile.NamedTemporaryFile(suffix=".mwf", delete=False)

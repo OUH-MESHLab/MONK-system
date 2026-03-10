@@ -34,10 +34,10 @@
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/OUH-MESHLab/MONK-library.git")
-             (commit "7508918dae0286e0b24759137605e59a773c9a59")))
+             (commit "e4885c10f4e34c9c5575123cf48afe2882357eed")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1lj6h78n6kxvaz7jzh9jl9kff839bcpcijpvcvfirs38siwlwd9h"))))
+        (base32 "1hl26clc845jyzalffhahwzchw5x5ai817i65pshv11pjdm50168"))))
     (build-system cmake-build-system)
     (arguments
      (list

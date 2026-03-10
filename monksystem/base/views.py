@@ -15,7 +15,7 @@ from django.contrib.auth import authenticate, login, logout
 from monklib import get_header
 
 from .models import Subject, UserProfile, Project, File, FileImport
-from .forms import FileForm, UserRegistrationForm, FileFieldForm
+from .forms import FileForm, UserRegistrationForm, FileFieldForm, EditProfileForm
 from .utils import (
     process_and_create_subject,
     download_format_csv,
@@ -43,8 +43,33 @@ def subject(request, pk):
 @require_GET
 def user(request, pk):
     usr = get_object_or_404(UserProfile, id=pk)
-    context = {"user": usr}
+    try:
+        viewer_profile = request.user.userprofile
+        shared_projects = Project.objects.filter(users=usr).filter(users=viewer_profile)
+    except UserProfile.DoesNotExist:
+        shared_projects = Project.objects.none()
+    context = {"user": usr, "shared_projects": shared_projects}
     return render(request, "base/user.html", context)
+
+
+@login_required
+def edit_profile(request):
+    try:
+        user_profile = request.user.userprofile
+    except UserProfile.DoesNotExist:
+        messages.error(request, "Profile not found.")
+        return redirect("home")
+
+    if request.method == "POST":
+        form = EditProfileForm(request.POST, instance=user_profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Profile updated successfully.")
+            return redirect("user", pk=user_profile.id)
+    else:
+        form = EditProfileForm(instance=user_profile)
+
+    return render(request, "base/edit_profile.html", {"form": form})
 
 
 @login_required
@@ -130,10 +155,12 @@ def register_page(request):
             user = form.save(commit=False)
             user.username = user.username.lower()
             user.save()
-            UserProfile.objects.create(
+            UserProfile.objects.update_or_create(
                 user=user,
-                name=form.cleaned_data.get("name"),
-                mobile=form.cleaned_data.get("mobile"),
+                defaults={
+                    "name": form.cleaned_data.get("name"),
+                    "mobile": form.cleaned_data.get("mobile"),
+                },
             )
             login(request, user)
             return redirect("home")
