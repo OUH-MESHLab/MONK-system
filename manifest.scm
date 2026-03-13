@@ -20,6 +20,7 @@
       "python-django"
       "python-asgiref"
       "python-sqlparse"
+      "python-whitenoise"
 
       ;; Testing
       "python-pytest"

@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.files import File as DjangoFile
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
@@ -22,6 +22,7 @@ from .utils import (
     download_mfer_header,
     download_mwf,
     plot_graph,
+    list_export_dirs,
 )
 
 
@@ -445,3 +446,11 @@ def import_from_directory(request):
         "available_files": available,
         "base_dir": base_dir,
     })
+
+
+@login_required
+@require_GET
+def list_export_dirs_view(request):
+    """Return JSON list of available export directories under /run/media/rafael."""
+    dirs = [{"name": name, "path": path} for name, path in list_export_dirs()]
+    return JsonResponse({"dirs": dirs})

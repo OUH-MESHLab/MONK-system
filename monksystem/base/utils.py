@@ -1,7 +1,9 @@
 import os
 import re
+import shutil
 import tempfile
 from datetime import datetime
+from pathlib import Path
 
 from django.db import IntegrityError
 from django.contrib import messages
@@ -82,12 +84,38 @@ def process_and_create_subject(file, request):
         )
 
 
+EXPORT_BASE_DIR = "/run/media/rafael"
+
+
+def list_export_dirs():
+    """Return a list of (name, path) tuples for each subdir of EXPORT_BASE_DIR."""
+    base = Path(EXPORT_BASE_DIR)
+    if not base.is_dir():
+        return []
+    return sorted(
+        (entry.name, str(entry))
+        for entry in base.iterdir()
+        if entry.is_dir()
+    )
+
+
+def _safe_export_path(target_dir: str, filename: str) -> Path:
+    """Return resolved destination path; raises ValueError if outside EXPORT_BASE_DIR."""
+    base = Path(EXPORT_BASE_DIR).resolve()
+    dest_dir = Path(target_dir).resolve()
+    dest_dir.relative_to(base)  # raises ValueError if outside base
+    dest = dest_dir / filename
+    dest.relative_to(base)      # guard against filename tricks
+    return dest
+
+
 @login_required
 @require_POST
 def download_format_csv(request, file_id):
     selected_channels = request.POST.getlist("channels")
     start_time_str = request.POST.get("start_time")
     end_time_str = request.POST.get("end_time")
+    export_dir = request.POST.get("export_dir", "").strip()
     start_seconds = float(start_time_str) if start_time_str else 0.0
     end_seconds = float(end_time_str) if end_time_str else 0.0
 
@@ -104,13 +132,36 @@ def download_format_csv(request, file_id):
     if start_time_str or end_time_str:
         data.setIntervalSelection(start_seconds, end_seconds)
 
+    csv_name = os.path.splitext(os.path.basename(file.file.path))[0] + ".csv"
+
+    if export_dir:
+        # Write directly to the chosen directory on external media
+        try:
+            dest_path = _safe_export_path(export_dir, csv_name)
+        except ValueError:
+            return JsonResponse({"error": "Invalid export directory."}, status=400)
+
+        fd, tmp_path = tempfile.mkstemp(suffix=".csv")
+        os.close(fd)
+        try:
+            data.writeToCsv(tmp_path)
+            shutil.move(tmp_path, str(dest_path))
+        except Exception as e:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+            return JsonResponse({"error": f"Export failed: {e}"}, status=500)
+
+        return JsonResponse({"status": "ok", "path": str(dest_path)})
+
+    # Fallback: stream as browser download
     fd, tmp_path = tempfile.mkstemp(suffix=".csv")
     os.close(fd)
     try:
         data.writeToCsv(tmp_path)
         with open(tmp_path, "rb") as f:
             response = HttpResponse(f.read(), content_type="text/csv")
-        csv_name = os.path.splitext(os.path.basename(file.file.path))[0] + ".csv"
         response["Content-Disposition"] = f'attachment; filename="{csv_name}"'
         return response
     finally:

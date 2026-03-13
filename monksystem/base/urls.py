@@ -34,5 +34,5 @@ urlpatterns = [
     path('download-MWF/<int:file_id>/', views.download_mwf, name='download_mwf'),
     path('plot_graph/<int:file_id>/', views.plot_graph, name='plot_graph'),
     path('download-CSV-Format/<int:file_id>/', views.download_format_csv, name='download_format_csv'),
-    
+    path('list-export-dirs/', views.list_export_dirs_view, name='list_export_dirs'),
 ]
