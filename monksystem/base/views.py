@@ -23,6 +23,8 @@ from .utils import (
     download_mwf,
     plot_graph,
     list_export_dirs,
+    list_usb_mwf_files,
+    _safe_usb_import_path,
 )
 
 
@@ -454,3 +456,65 @@ def list_export_dirs_view(request):
     """Return JSON list of available export directories under /run/media/rafael."""
     dirs = [{"name": name, "path": path} for name, path in list_export_dirs()]
     return JsonResponse({"dirs": dirs})
+
+
+@login_required
+@require_GET
+def list_usb_mwf_files_view(request):
+    """Return JSON list of .mwf files in the given USB subdirectory."""
+    usb_dir = request.GET.get("dir", "").strip()
+    if not usb_dir:
+        return JsonResponse({"error": "No directory specified."}, status=400)
+    try:
+        files = list_usb_mwf_files(usb_dir)
+    except ValueError:
+        return JsonResponse({"error": "Invalid directory."}, status=400)
+    return JsonResponse({"files": files})
+
+
+@login_required
+def import_from_usb(request):
+    """Import selected .mwf files from a USB drive subdirectory."""
+    if request.method != "POST":
+        return redirect("import_file")
+
+    usb_dir = request.POST.get("usb_dir", "").strip()
+    filenames = request.POST.getlist("filenames")
+
+    if not usb_dir:
+        messages.error(request, "No USB drive selected.")
+        return redirect("import_file")
+    if not filenames:
+        messages.error(request, "No files selected.")
+        return redirect("import_file")
+
+    try:
+        user_profile = request.user.userprofile
+    except UserProfile.DoesNotExist:
+        messages.error(request, "You are not registered as a regular user.")
+        return redirect("view_files")
+
+    imported = 0
+    for name in filenames:
+        if not name.lower().endswith(".mwf"):
+            messages.error(request, f"Skipped non-.mwf file: {name}")
+            continue
+        try:
+            safe_path = _safe_usb_import_path(usb_dir, name)
+        except ValueError:
+            messages.error(request, f"Invalid filename rejected: {name}")
+            continue
+        if not safe_path.is_file():
+            messages.error(request, f"File no longer available: {name}")
+            continue
+        with open(safe_path, "rb") as fh:
+            django_file = DjangoFile(fh, name=safe_path.name)
+            title = safe_path.stem
+            new_file = File.objects.create(file=django_file, title=title)
+            FileImport.objects.create(user=user_profile, file=new_file)
+            process_and_create_subject(new_file, request)
+        imported += 1
+
+    if imported:
+        messages.success(request, f"{imported} file(s) imported successfully.")
+    return redirect("view_files")

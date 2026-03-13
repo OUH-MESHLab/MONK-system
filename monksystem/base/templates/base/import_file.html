@@ -22,11 +22,18 @@
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link{% if server_import %} active{% endif %}" id="dir-tab"
+            <button class="nav-link" id="dir-tab"
                     data-bs-toggle="tab" data-bs-target="#dir"
-                    type="button" role="tab" aria-controls="dir"
-                    aria-selected="{% if server_import %}true{% else %}false{% endif %}">
+                    type="button" role="tab" aria-controls="dir" aria-selected="false">
                 <i class="bi bi-folder2-open me-1"></i>From Server
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link{% if server_import %} active{% endif %}" id="usb-tab"
+                    data-bs-toggle="tab" data-bs-target="#usb"
+                    type="button" role="tab" aria-controls="usb"
+                    aria-selected="{% if server_import %}true{% else %}false{% endif %}">
+                <i class="bi bi-usb-drive me-1"></i>From USB
             </button>
         </li>
     </ul>
@@ -40,7 +47,7 @@
             <div class="alert alert-warning d-flex align-items-center" role="alert">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                 Browser file dialogs are not available in kiosk mode.
-                Use the <strong>&nbsp;From Server&nbsp;</strong> tab to import files.
+                Use the <strong>&nbsp;From USB&nbsp;</strong> tab to import files.
             </div>
             {% else %}
             <p class="text-muted small">Provide a title and select a single .mwf file to import.</p>
@@ -71,7 +78,7 @@
             <div class="alert alert-warning d-flex align-items-center" role="alert">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                 Browser file dialogs are not available in kiosk mode.
-                Use the <strong>&nbsp;From Server&nbsp;</strong> tab to import files.
+                Use the <strong>&nbsp;From USB&nbsp;</strong> tab to import files.
             </div>
             {% else %}
             <p class="text-muted small">Select multiple .mwf files to import at once. Titles are set from filenames.</p>
@@ -92,7 +99,7 @@
         </div>
 
         <!-- From server tab -->
-        <div class="tab-pane fade{% if server_import %} show active{% endif %}" id="dir"
+        <div class="tab-pane fade" id="dir"
              role="tabpanel" aria-labelledby="dir-tab">
             <p class="text-muted small">
                 Import .mwf files directly from the configured server directory
@@ -103,6 +110,145 @@
             </a>
         </div>
 
+        <!-- From USB tab -->
+        <div class="tab-pane fade{% if server_import %} show active{% endif %}" id="usb"
+             role="tabpanel" aria-labelledby="usb-tab">
+            <p class="text-muted small">Import .mwf files directly from a connected USB drive.</p>
+
+            <div id="usb-drives-section">
+                <p class="text-muted small mb-2">Select a USB drive:</p>
+                <div id="usb-drives-list" class="d-flex flex-wrap gap-2 mb-3">
+                    <span class="text-muted fst-italic" id="usb-drives-placeholder">Loading drives…</span>
+                </div>
+            </div>
+
+            <div id="usb-files-section" class="d-none">
+                <p class="text-muted small mb-2">
+                    Drive: <strong id="usb-selected-drive-name"></strong>
+                    <button type="button" class="btn btn-link btn-sm p-0 ms-2" id="usb-change-drive">Change</button>
+                </p>
+                <form method="post" action="{% url 'import_from_usb' %}" id="usb-import-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="usb_dir" id="usb-dir-input">
+                    <div id="usb-file-list" class="list-group mb-3"></div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="usb-select-all">
+                            Select all
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-usb-drive me-1"></i>Import selected
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="usb-no-drives" class="d-none">
+                <div class="alert alert-info mb-0">No USB drives detected.</div>
+            </div>
+
+            <div id="usb-no-files" class="d-none">
+                <div class="alert alert-info mb-0">No .mwf files found on this drive.</div>
+                <div class="text-center mt-3">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="usb-back-from-no-files">
+                        <i class="bi bi-arrow-left me-1"></i>Choose another drive
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const tab = document.getElementById('usb-tab');
+    if (!tab) return;
+
+    var drivesRendered = false;
+
+    function showSection(id) {
+        ['usb-drives-section', 'usb-files-section', 'usb-no-drives', 'usb-no-files'].forEach(function (s) {
+            document.getElementById(s).classList.add('d-none');
+        });
+        document.getElementById(id).classList.remove('d-none');
+    }
+
+    function loadDrives() {
+        drivesRendered = false;
+        showSection('usb-drives-section');
+        document.getElementById('usb-drives-placeholder').classList.remove('d-none');
+        document.getElementById('usb-drives-placeholder').textContent = 'Loading drives…';
+        document.getElementById('usb-drives-list').innerHTML =
+            '<span class="text-muted fst-italic" id="usb-drives-placeholder">Loading drives…</span>';
+
+        fetch("{% url 'list_export_dirs' %}")
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var list = document.getElementById('usb-drives-list');
+                list.innerHTML = '';
+                if (!data.dirs || data.dirs.length === 0) {
+                    showSection('usb-no-drives');
+                    return;
+                }
+                data.dirs.forEach(function (d) {
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'btn btn-outline-secondary';
+                    btn.innerHTML = '<i class="bi bi-usb-drive me-1"></i>' + d.name;
+                    btn.addEventListener('click', function () { loadFiles(d.name, d.path); });
+                    list.appendChild(btn);
+                });
+                showSection('usb-drives-section');
+                drivesRendered = true;
+            })
+            .catch(function () { showSection('usb-no-drives'); });
+    }
+
+    function loadFiles(driveName, drivePath) {
+        document.getElementById('usb-selected-drive-name').textContent = driveName;
+        document.getElementById('usb-dir-input').value = drivePath;
+        var fileList = document.getElementById('usb-file-list');
+        fileList.innerHTML = '<span class="text-muted fst-italic">Loading files…</span>';
+        showSection('usb-files-section');
+
+        fetch("{% url 'list_usb_mwf_files' %}?dir=" + encodeURIComponent(drivePath))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                fileList.innerHTML = '';
+                if (!data.files || data.files.length === 0) {
+                    showSection('usb-no-files');
+                    return;
+                }
+                data.files.forEach(function (name) {
+                    var label = document.createElement('label');
+                    label.className = 'list-group-item list-group-item-action';
+                    label.innerHTML = '<input type="checkbox" name="filenames" value="' +
+                        name.replace(/"/g, '&quot;') + '" class="me-2"> ' + name;
+                    fileList.appendChild(label);
+                });
+            })
+            .catch(function () {
+                fileList.innerHTML = '<span class="text-danger">Failed to load files.</span>';
+            });
+    }
+
+    document.getElementById('usb-change-drive').addEventListener('click', loadDrives);
+    document.getElementById('usb-back-from-no-files').addEventListener('click', loadDrives);
+
+    document.getElementById('usb-select-all').addEventListener('click', function () {
+        var cbs = document.querySelectorAll('#usb-file-list input[name="filenames"]');
+        var allChecked = Array.from(cbs).every(function (cb) { return cb.checked; });
+        cbs.forEach(function (cb) { cb.checked = !allChecked; });
+        this.textContent = allChecked ? 'Select all' : 'Deselect all';
+    });
+
+    tab.addEventListener('shown.bs.tab', function () {
+        if (!drivesRendered) { loadDrives(); }
+    });
+
+    if (tab.classList.contains('active')) { loadDrives(); }
+})();
+</script>
 {% endblock %}
