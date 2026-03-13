@@ -3,73 +3,88 @@
 {% block title %}{% if page == 'login' %}Login{% else %}Register{% endif %} — MONK{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-5">
-            <div class="card my-5 shadow-sm">
-                <div class="card-body p-4">
+<div class="monk-auth-wrap">
+    <div class="monk-auth-card">
 
-                    {% if page == 'login' %}
-
-                    <h2 class="text-center mb-4">Login</h2>
-                    <form method="POST" action="">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Username</label>
-                            <input type="text" name="username" id="username" class="form-control" placeholder="Enter username" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" name="password" id="password" class="form-control" placeholder="Enter password" required>
-                        </div>
-                        <div class="d-grid mb-3">
-                            <input type="submit" value="Login" class="btn btn-primary">
-                        </div>
-                        <p class="text-center mb-1">Haven't signed up yet? <a href="{% url 'register' %}">Sign up</a></p>
-                        <p class="text-center"><a href="/admin">Log in as admin</a></p>
-                    </form>
-
-                    {% else %}
-
-                    <h2 class="text-center mb-4">Register</h2>
-                    <form method="POST" action="">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="id_username" class="form-label">Username</label>
-                            {{ form.username }}
-                            {% for error in form.username.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-                        </div>
-                        <div class="mb-3">
-                            <label for="id_name" class="form-label">Full Name</label>
-                            {{ form.name }}
-                            {% for error in form.name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-                        </div>
-                        <div class="mb-3">
-                            <label for="id_email" class="form-label">Email</label>
-                            {{ form.email }}
-                            {% for error in form.email.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-                        </div>
-                        <div class="mb-3">
-                            <label for="id_password1" class="form-label">Password</label>
-                            {{ form.password1 }}
-                            {% for error in form.password1.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-                        </div>
-                        <div class="mb-3">
-                            <label for="id_password2" class="form-label">Confirm Password</label>
-                            {{ form.password2 }}
-                            {% for error in form.password2.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-                        </div>
-                        <div class="d-grid mb-3">
-                            <input type="submit" value="Register Account" class="btn btn-primary">
-                        </div>
-                        <p class="text-center">Already have an account? <a href="{% url 'login' %}">Login</a></p>
-                    </form>
-
-                    {% endif %}
-
-                </div>
-            </div>
+        <!-- Brand mark -->
+        <div class="monk-auth-brand">
+            <i class="bi bi-activity"></i>
+            <span>MONK</span>
         </div>
+
+        {% if page == 'login' %}
+
+        <h2 class="monk-auth-title">Sign in</h2>
+        <p class="monk-auth-sub">Nihon-Kohden waveform management</p>
+
+        <form method="POST" action="">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="username" class="form-label fw-medium">Username</label>
+                <input type="text" name="username" id="username" class="form-control form-control-lg"
+                       placeholder="Enter username" required autofocus>
+            </div>
+            <div class="mb-4">
+                <label for="password" class="form-label fw-medium">Password</label>
+                <input type="password" name="password" id="password" class="form-control form-control-lg"
+                       placeholder="Enter password" required>
+            </div>
+            <div class="d-grid mb-3">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Sign in
+                </button>
+            </div>
+            <div class="monk-auth-links">
+                <a href="{% url 'register' %}">Create account</a>
+                <span class="text-muted">·</span>
+                <a href="/admin">Admin</a>
+            </div>
+        </form>
+
+        {% else %}
+
+        <h2 class="monk-auth-title">Create account</h2>
+        <p class="monk-auth-sub">Register to access MONK</p>
+
+        <form method="POST" action="">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="id_username" class="form-label fw-medium">Username</label>
+                {{ form.username }}
+                {% for error in form.username.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="mb-3">
+                <label for="id_name" class="form-label fw-medium">Full Name</label>
+                {{ form.name }}
+                {% for error in form.name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="mb-3">
+                <label for="id_email" class="form-label fw-medium">Email</label>
+                {{ form.email }}
+                {% for error in form.email.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="mb-3">
+                <label for="id_password1" class="form-label fw-medium">Password</label>
+                {{ form.password1 }}
+                {% for error in form.password1.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="mb-4">
+                <label for="id_password2" class="form-label fw-medium">Confirm Password</label>
+                {{ form.password2 }}
+                {% for error in form.password2.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="d-grid mb-3">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-person-check me-2"></i>Register Account
+                </button>
+            </div>
+            <div class="monk-auth-links">
+                <a href="{% url 'login' %}">Already have an account? Sign in</a>
+            </div>
+        </form>
+
+        {% endif %}
+
     </div>
 </div>
 {% endblock content %}

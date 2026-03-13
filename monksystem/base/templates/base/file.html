@@ -3,51 +3,65 @@
 {% block title %}{{ file.title }} — MONK{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container py-4">
 
     <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb">
+    <nav aria-label="breadcrumb" class="mb-3">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'view_files' %}">Files</a></li>
             <li class="breadcrumb-item active" aria-current="page">{{ file.title }}</li>
         </ol>
     </nav>
 
-    <h2 class="mb-4">{{ file.title }}</h2>
-
-    <!-- File Content Card -->
-    <div class="card mb-4">
-        <div class="card-header"><h5 class="mb-0">File Content</h5></div>
-        <div class="card-body">
-            {% if is_text_file %}
-            <pre class="card-text p-3">{{ content }}</pre>
-            {% elif is_MFER_file %}
-            <h6 class="text-muted mb-2">MFER File Header</h6>
-            <pre class="card-text p-3">{{ content }}</pre>
-            {% else %}
-            <p class="card-text">Unsupported file format for direct display.</p>
-            <a href="{{ file.file.url }}" class="btn btn-primary" target="_blank">Download File</a>
-            {% endif %}
+    <!-- Page header -->
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <div class="monk-file-icon-lg">
+            <i class="bi bi-file-earmark-waveform"></i>
+        </div>
+        <div>
+            <h2 class="mb-0">{{ file.title }}</h2>
+            {% with file.fileimport_set.first as imp %}{% if imp %}
+            <small class="text-muted">
+                <i class="bi bi-clock me-1"></i>{{ imp.imported_at|date:"Y-m-d H:i" }}
+                &nbsp;·&nbsp;
+                <i class="bi bi-person me-1"></i>{{ imp.user.name }}
+            </small>
+            {% endif %}{% endwith %}
         </div>
     </div>
 
+    <!-- MFER header card (collapsible) -->
+    {% if is_MFER_file or is_text_file %}
+    <div class="monk-header-card mb-4">
+        <button class="monk-header-card__toggle" type="button"
+                data-bs-toggle="collapse" data-bs-target="#headerCollapse"
+                aria-expanded="false" aria-controls="headerCollapse">
+            <span><i class="bi bi-code-square me-2"></i>File Header</span>
+            <i class="bi bi-chevron-down monk-header-card__chevron"></i>
+        </button>
+        <div class="collapse" id="headerCollapse">
+            <pre class="monk-header-card__pre">{{ content }}</pre>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Actions Panel -->
-    <ul class="nav nav-tabs mb-0" id="actionTabs" role="tablist">
+    <ul class="nav monk-tabs mb-0" id="actionTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="visualize-tab" data-bs-toggle="tab" data-bs-target="#visualize"
+            <button class="monk-tab active" id="visualize-tab" data-bs-toggle="tab" data-bs-target="#visualize"
                     type="button" role="tab" aria-controls="visualize" aria-selected="true">
                 <i class="bi bi-graph-up me-1"></i>Visualize
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="csv-tab" data-bs-toggle="tab" data-bs-target="#csv"
+            <button class="monk-tab" id="csv-tab" data-bs-toggle="tab" data-bs-target="#csv"
                     type="button" role="tab" aria-controls="csv" aria-selected="false">
                 <i class="bi bi-filetype-csv me-1"></i>Export CSV
             </button>
         </li>
         {% if is_MFER_file %}
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="download-tab" data-bs-toggle="tab" data-bs-target="#download"
+            <button class="monk-tab" id="download-tab" data-bs-toggle="tab" data-bs-target="#download"
                     type="button" role="tab" aria-controls="download" aria-selected="false">
                 <i class="bi bi-download me-1"></i>Download Raw
             </button>
@@ -55,7 +69,7 @@
         {% endif %}
     </ul>
 
-    <div class="tab-content border border-top-0 rounded-bottom p-4 mb-4" id="actionTabsContent">
+    <div class="monk-tab-content mb-4" id="actionTabsContent">
 
         <!-- Visualize tab -->
         <div class="tab-pane fade show active" id="visualize" role="tabpanel" aria-labelledby="visualize-tab">

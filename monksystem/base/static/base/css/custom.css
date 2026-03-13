@@ -1,0 +1,368 @@
+/* ── MONK custom styles ─────────────────────────────────────────────────────
+   Load order: bootstrap.min.css → bootstrap-icons.css → custom.css
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* 1. Design tokens
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  --monk-primary:      #2563EB;
+  --monk-primary-dark: #1D4ED8;
+  --monk-blue-soft:    #3B82F6;
+  --monk-cta:          #F97316;
+  --monk-bg:           #F8FAFC;
+  --monk-surface:      #FFFFFF;
+  --monk-text:         #1E293B;
+  --monk-muted:        #64748B;
+  --monk-border:       #E2E8F0;
+  --monk-radius:       0.5rem;
+  --monk-radius-lg:    0.75rem;
+  --monk-shadow:       0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+  --monk-shadow-md:    0 4px 12px rgba(0,0,0,.10);
+}
+
+/* 2. Base
+   ────────────────────────────────────────────────────────────────────────── */
+body {
+  background-color: var(--monk-bg);
+  color: var(--monk-text);
+  font-family: 'Noto Sans', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  font-family: 'Figtree', system-ui, sans-serif;
+  font-weight: 600;
+  color: var(--monk-text);
+}
+
+/* 3. Navbar
+   ────────────────────────────────────────────────────────────────────────── */
+.monk-navbar {
+  background-color: var(--monk-surface);
+  border-bottom: 1px solid var(--monk-border);
+  box-shadow: var(--monk-shadow);
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.monk-navbar__brand {
+  font-family: 'Figtree', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--monk-primary) !important;
+  letter-spacing: -0.01em;
+}
+.monk-navbar__brand:hover {
+  color: var(--monk-primary-dark) !important;
+}
+
+.monk-navbar__link {
+  color: var(--monk-muted) !important;
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--monk-radius);
+  transition: color .15s ease, background-color .15s ease;
+}
+.monk-navbar__link:hover {
+  color: var(--monk-primary) !important;
+  background-color: #EFF6FF;
+}
+.monk-navbar__link.active {
+  color: var(--monk-primary) !important;
+  font-weight: 600;
+}
+
+.monk-navbar__logout {
+  color: var(--monk-muted) !important;
+}
+.monk-navbar__logout:hover {
+  color: #DC2626 !important;
+  background-color: #FEF2F2 !important;
+}
+
+/* 4. Auth (login / register)
+   ────────────────────────────────────────────────────────────────────────── */
+.monk-auth-wrap {
+  min-height: calc(100vh - 60px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.monk-auth-card {
+  background: var(--monk-surface);
+  border-top: 4px solid var(--monk-primary);
+  border-radius: var(--monk-radius-lg);
+  box-shadow: var(--monk-shadow-md);
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 440px;
+}
+
+.monk-auth-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: 'Figtree', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.75rem;
+  color: var(--monk-primary);
+  margin-bottom: 1.5rem;
+}
+.monk-auth-brand i { font-size: 1.75rem; }
+
+.monk-auth-title {
+  font-size: 1.5rem;
+  text-align: center;
+  margin-bottom: 0.25rem;
+}
+
+.monk-auth-sub {
+  text-align: center;
+  color: var(--monk-muted);
+  font-size: 0.875rem;
+  margin-bottom: 1.75rem;
+}
+
+.monk-auth-links {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--monk-muted);
+}
+.monk-auth-links a {
+  color: var(--monk-primary);
+  text-decoration: none;
+}
+.monk-auth-links a:hover { text-decoration: underline; }
+
+/* 5. File list
+   ────────────────────────────────────────────────────────────────────────── */
+.monk-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--monk-surface);
+  border: 1px solid var(--monk-border);
+  border-radius: 2rem;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.875rem;
+  color: var(--monk-text);
+}
+
+.monk-file-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--monk-surface);
+  border: 1px solid var(--monk-border);
+  border-radius: var(--monk-radius-lg);
+  box-shadow: var(--monk-shadow);
+  text-decoration: none;
+  color: var(--monk-text);
+  transition: box-shadow .2s ease, border-color .2s ease, transform .15s ease;
+  overflow: hidden;
+}
+.monk-file-card:hover {
+  box-shadow: var(--monk-shadow-md);
+  border-color: #BFDBFE;
+  transform: translateY(-2px);
+  color: var(--monk-text);
+  text-decoration: none;
+}
+
+.monk-file-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  background: #EFF6FF;
+  border-bottom: 1px solid #DBEAFE;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--monk-primary);
+}
+.monk-file-card__header > .bi-file-earmark-waveform {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.monk-file-card__title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.monk-file-card__arrow {
+  font-size: 0.8rem;
+  opacity: 0.5;
+  flex-shrink: 0;
+  transition: transform .15s ease, opacity .15s ease;
+}
+.monk-file-card:hover .monk-file-card__arrow {
+  transform: translateX(3px);
+  opacity: 1;
+}
+
+.monk-file-card__body {
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.monk-file-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--monk-muted);
+}
+
+/* Empty state */
+.monk-empty {
+  text-align: center;
+  padding: 5rem 1rem;
+}
+.monk-empty__icon {
+  font-size: 3.5rem;
+  color: var(--monk-border);
+  display: block;
+  margin-bottom: 1rem;
+}
+
+/* 6. File detail
+   ────────────────────────────────────────────────────────────────────────── */
+.monk-file-icon-lg {
+  width: 3rem;
+  height: 3rem;
+  background: #EFF6FF;
+  border-radius: var(--monk-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--monk-primary);
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+/* Collapsible header card */
+.monk-header-card {
+  background: var(--monk-surface);
+  border: 1px solid var(--monk-border);
+  border-radius: var(--monk-radius);
+  overflow: hidden;
+}
+.monk-header-card__toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #F8FAFC;
+  border: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--monk-text);
+  cursor: pointer;
+}
+.monk-header-card__toggle:hover { background: #EFF6FF; color: var(--monk-primary); }
+.monk-header-card__chevron {
+  transition: transform .2s ease;
+}
+.monk-header-card__toggle[aria-expanded="true"] .monk-header-card__chevron {
+  transform: rotate(180deg);
+}
+.monk-header-card__pre {
+  margin: 0;
+  padding: 1rem;
+  font-size: 0.8rem;
+  background: #1E293B;
+  color: #E2E8F0;
+  border-top: 1px solid var(--monk-border);
+  overflow-x: auto;
+  max-height: 300px;
+}
+
+/* Tabs */
+.monk-tabs {
+  border-bottom: none;
+  gap: 0.25rem;
+}
+.monk-tab {
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--monk-border);
+  border-bottom: none;
+  border-radius: var(--monk-radius) var(--monk-radius) 0 0;
+  background: #F1F5F9;
+  color: var(--monk-muted);
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.monk-tab:hover {
+  background: #E2E8F0;
+  color: var(--monk-text);
+}
+.monk-tab.active {
+  background: var(--monk-primary);
+  color: #fff;
+  border-color: var(--monk-primary);
+}
+
+.monk-tab-content {
+  background: var(--monk-surface);
+  border: 1px solid var(--monk-border);
+  border-radius: 0 var(--monk-radius) var(--monk-radius) var(--monk-radius);
+  padding: 1.5rem;
+}
+
+/* 7. Micro-interactions
+   ────────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+
+  /* Buttons */
+  .btn {
+    transition: filter .15s ease, transform .1s ease, box-shadow .15s ease;
+  }
+  .btn:hover:not(:disabled) {
+    filter: brightness(1.07);
+  }
+  .btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  /* Cards (generic Bootstrap cards) */
+  .card {
+    transition: box-shadow .2s ease;
+  }
+  .card:hover {
+    box-shadow: var(--monk-shadow-md);
+  }
+
+  /* Links */
+  a {
+    transition: color .15s ease;
+  }
+
+  /* Form controls — subtle focus ring in brand colour */
+  .form-control:focus,
+  .form-select:focus {
+    border-color: var(--monk-blue-soft);
+    box-shadow: 0 0 0 3px rgba(59,130,246,.2);
+  }
+
+  /* Alerts fade in */
+  .alert {
+    animation: monk-fadein .25s ease;
+  }
+
+  @keyframes monk-fadein {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+}
