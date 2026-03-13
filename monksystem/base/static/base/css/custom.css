@@ -366,3 +366,170 @@ h1, h2, h3, h4, h5, h6,
   }
 
 }
+
+/* 8. Home page
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* Hero */
+.monk-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--monk-surface);
+  border: 1px solid var(--monk-border);
+  border-left: 4px solid var(--monk-primary);
+  border-radius: var(--monk-radius-lg);
+  padding: 1.75rem 2rem;
+  box-shadow: var(--monk-shadow);
+}
+.monk-hero__brand {
+  font-family: 'Figtree', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.75rem;
+  color: var(--monk-primary);
+  margin-bottom: 0.4rem;
+}
+.monk-hero__sub {
+  color: var(--monk-muted);
+  font-size: 0.95rem;
+  margin: 0;
+  max-width: 520px;
+}
+
+/* Workflow steps */
+.monk-workflow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.monk-workflow__step {
+  flex: 1;
+  background: var(--monk-surface);
+  border: 1px solid var(--monk-border);
+  border-radius: var(--monk-radius-lg);
+  padding: 1.25rem 1rem;
+  text-align: center;
+  position: relative;
+}
+.monk-workflow__num {
+  position: absolute;
+  top: -0.6rem;
+  left: 1rem;
+  background: var(--monk-primary);
+  color: #fff;
+  font-family: 'Figtree', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.75rem;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.monk-workflow__icon {
+  font-size: 1.75rem;
+  color: var(--monk-primary);
+  margin-bottom: 0.5rem;
+}
+.monk-workflow__label {
+  font-family: 'Figtree', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.3rem;
+}
+.monk-workflow__desc {
+  font-size: 0.8rem;
+  color: var(--monk-muted);
+  line-height: 1.4;
+}
+.monk-workflow__arrow {
+  color: var(--monk-border);
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+/* Action cards */
+.monk-action-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--monk-surface);
+  border: 1px solid var(--monk-border);
+  border-radius: var(--monk-radius-lg);
+  padding: 1.25rem;
+  text-decoration: none;
+  color: var(--monk-text);
+  box-shadow: var(--monk-shadow);
+  transition: box-shadow .2s ease, border-color .2s ease, transform .15s ease;
+  height: 100%;
+}
+.monk-action-card:hover {
+  box-shadow: var(--monk-shadow-md);
+  border-color: #BFDBFE;
+  transform: translateY(-2px);
+  color: var(--monk-text);
+  text-decoration: none;
+}
+.monk-action-card__icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--monk-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+.monk-action-card__body { flex: 1; }
+.monk-action-card__title {
+  font-family: 'Figtree', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.2rem;
+}
+.monk-action-card__desc {
+  font-size: 0.85rem;
+  color: var(--monk-muted);
+}
+.monk-action-card__arrow {
+  color: var(--monk-border);
+  transition: transform .15s ease, color .15s ease;
+}
+.monk-action-card:hover .monk-action-card__arrow {
+  transform: translateX(4px);
+  color: var(--monk-primary);
+}
+
+/* Recent files */
+.monk-recent__heading {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--monk-muted);
+  margin-bottom: 0.75rem;
+}
+.monk-recent__list {
+  border-radius: var(--monk-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--monk-border);
+}
+.monk-recent__item {
+  display: flex;
+  align-items: center;
+  padding: 0.7rem 1rem;
+  font-size: 0.9rem;
+  border-left: none;
+  border-right: none;
+  transition: background .15s ease;
+}
+.monk-recent__item:first-child { border-top: none; }
+.monk-recent__item:last-child  { border-bottom: none; }
+.monk-recent__item:hover { background: #EFF6FF; color: var(--monk-primary); }
+.monk-recent__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
