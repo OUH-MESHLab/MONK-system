@@ -9,7 +9,7 @@ from django.http import HttpResponseForbidden, JsonResponse
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 from django.contrib.auth import authenticate, login, logout
 
 from monklib import get_header
@@ -23,8 +23,9 @@ from .utils import (
     download_mwf,
     plot_graph,
     list_export_dirs,
-    list_usb_mwf_files,
-    _safe_usb_import_path,
+    browse_usb_dir,
+    scan_usb_mwf_files,
+    _safe_usb_file_path,
 )
 
 
@@ -460,31 +461,37 @@ def list_export_dirs_view(request):
 
 @login_required
 @require_GET
-def list_usb_mwf_files_view(request):
-    """Return JSON list of .mwf files in the given USB subdirectory."""
-    usb_dir = request.GET.get("dir", "").strip()
-    if not usb_dir:
-        return JsonResponse({"error": "No directory specified."}, status=400)
+def browse_usb_view(request):
+    """Return JSON directory listing (non-recursive) for the USB browser."""
+    from .utils import EXPORT_BASE_DIR
+    path = request.GET.get("path", "").strip() or EXPORT_BASE_DIR
     try:
-        files = list_usb_mwf_files(usb_dir)
-    except ValueError:
-        return JsonResponse({"error": "Invalid directory."}, status=400)
-    return JsonResponse({"files": files})
+        data = browse_usb_dir(path)
+    except (ValueError, OSError) as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(data)
 
 
 @login_required
+@require_POST
+def scan_usb_mwf_view(request):
+    """Recursively scan a USB subdirectory for .mwf files (with limit)."""
+    path = request.POST.get("path", "").strip()
+    if not path:
+        return JsonResponse({"error": "No path specified."}, status=400)
+    try:
+        data = scan_usb_mwf_files(path)
+    except (ValueError, OSError) as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(data)
+
+
+@login_required
+@require_POST
 def import_from_usb(request):
-    """Import selected .mwf files from a USB drive subdirectory."""
-    if request.method != "POST":
-        return redirect("import_file")
-
-    usb_dir = request.POST.get("usb_dir", "").strip()
-    filenames = request.POST.getlist("filenames")
-
-    if not usb_dir:
-        messages.error(request, "No USB drive selected.")
-        return redirect("import_file")
-    if not filenames:
+    """Import selected .mwf files from a USB drive (absolute paths, validated under EXPORT_BASE_DIR)."""
+    file_paths = request.POST.getlist("file_paths")
+    if not file_paths:
         messages.error(request, "No files selected.")
         return redirect("import_file")
 
@@ -495,22 +502,21 @@ def import_from_usb(request):
         return redirect("view_files")
 
     imported = 0
-    for name in filenames:
-        if not name.lower().endswith(".mwf"):
-            messages.error(request, f"Skipped non-.mwf file: {name}")
+    for abs_path in file_paths:
+        if not abs_path.lower().endswith(".mwf"):
+            messages.error(request, f"Skipped non-.mwf file: {abs_path}")
             continue
         try:
-            safe_path = _safe_usb_import_path(usb_dir, name)
+            safe_path = _safe_usb_file_path(abs_path)
         except ValueError:
-            messages.error(request, f"Invalid filename rejected: {name}")
+            messages.error(request, f"Invalid path rejected: {abs_path}")
             continue
         if not safe_path.is_file():
-            messages.error(request, f"File no longer available: {name}")
+            messages.error(request, f"File no longer available: {safe_path.name}")
             continue
         with open(safe_path, "rb") as fh:
             django_file = DjangoFile(fh, name=safe_path.name)
-            title = safe_path.stem
-            new_file = File.objects.create(file=django_file, title=title)
+            new_file = File.objects.create(file=django_file, title=safe_path.stem)
             FileImport.objects.create(user=user_profile, file=new_file)
             process_and_create_subject(new_file, request)
         imported += 1

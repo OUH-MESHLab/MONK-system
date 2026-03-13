@@ -99,27 +99,51 @@ def list_export_dirs():
     )
 
 
-def list_usb_mwf_files(usb_dir: str) -> list:
-    """Return sorted list of relative .mwf paths in usb_dir (recursive), validated under EXPORT_BASE_DIR."""
+MONK_USB_SCAN_LIMIT = 5000
+
+
+def browse_usb_dir(path: str) -> dict:
+    """List immediate children of path (dirs and .mwf files), validated under EXPORT_BASE_DIR."""
     base = Path(EXPORT_BASE_DIR).resolve()
-    target = Path(usb_dir).resolve()
+    target = Path(path).resolve()
     target.relative_to(base)  # raises ValueError if outside base
-    if not target.is_dir():
-        return []
-    return sorted(
-        str(f.relative_to(target))
-        for f in target.rglob("*")
-        if f.is_file() and f.suffix.lower() == ".mwf"
-    )
+    dirs, files = [], []
+    for child in sorted(target.iterdir()):
+        if child.name.startswith("."):
+            continue
+        if child.is_dir():
+            dirs.append({"name": child.name, "path": str(child)})
+        elif child.is_file() and child.suffix.lower() == ".mwf":
+            files.append({"name": child.name, "path": str(child)})
+    parent = str(target.parent) if target != base else None
+    return {"path": str(target), "parent": parent, "dirs": dirs, "files": files}
 
 
-def _safe_usb_import_path(usb_dir: str, name: str) -> Path:
-    """Return resolved path for name inside usb_dir, validated under EXPORT_BASE_DIR."""
+def scan_usb_mwf_files(path: str) -> dict:
+    """Recursively find .mwf files under path, validated under EXPORT_BASE_DIR.
+
+    Stops after MONK_USB_SCAN_LIMIT files to avoid worker timeouts.
+    Returns {"files": [...], "count": n, "truncated": bool}.
+    """
     base = Path(EXPORT_BASE_DIR).resolve()
-    target_dir = Path(usb_dir).resolve()
-    target_dir.relative_to(base)  # raises ValueError if outside base
-    candidate = (target_dir / name).resolve()
-    candidate.relative_to(base)   # guard against filename tricks
+    target = Path(path).resolve()
+    target.relative_to(base)  # raises ValueError if outside base
+    files = []
+    truncated = False
+    for f in sorted(target.rglob("*")):
+        if f.is_file() and f.suffix.lower() == ".mwf":
+            files.append({"name": f.name, "path": str(f)})
+            if len(files) >= MONK_USB_SCAN_LIMIT:
+                truncated = True
+                break
+    return {"files": files, "count": len(files), "truncated": truncated}
+
+
+def _safe_usb_file_path(abs_path: str) -> Path:
+    """Validate abs_path is under EXPORT_BASE_DIR and return the resolved Path."""
+    base = Path(EXPORT_BASE_DIR).resolve()
+    candidate = Path(abs_path).resolve()
+    candidate.relative_to(base)  # raises ValueError if outside base
     return candidate
 
 
@@ -281,7 +305,18 @@ def plot_graph(request, file_id):
         os.close(fd)
         try:
             convert_to_csv(file_instance.file.path, tmp_path)
-            df = pd.read_csv(tmp_path, nrows=rows)
+            # Count total rows to determine stride for even sampling across the
+            # full recording (avoids dropping channels that only appear later).
+            with open(tmp_path) as _f:
+                total_rows = sum(1 for _ in _f) - 1  # subtract header
+            stride = max(1, total_rows // rows)
+            if stride > 1:
+                df = pd.read_csv(
+                    tmp_path,
+                    skiprows=lambda i: i > 0 and (i - 1) % stride != 0,
+                )
+            else:
+                df = pd.read_csv(tmp_path)
         finally:
             os.unlink(tmp_path)
 
