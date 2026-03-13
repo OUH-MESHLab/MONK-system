@@ -99,6 +99,30 @@ def list_export_dirs():
     )
 
 
+def list_usb_mwf_files(usb_dir: str) -> list:
+    """Return sorted list of relative .mwf paths in usb_dir (recursive), validated under EXPORT_BASE_DIR."""
+    base = Path(EXPORT_BASE_DIR).resolve()
+    target = Path(usb_dir).resolve()
+    target.relative_to(base)  # raises ValueError if outside base
+    if not target.is_dir():
+        return []
+    return sorted(
+        str(f.relative_to(target))
+        for f in target.rglob("*")
+        if f.is_file() and f.suffix.lower() == ".mwf"
+    )
+
+
+def _safe_usb_import_path(usb_dir: str, name: str) -> Path:
+    """Return resolved path for name inside usb_dir, validated under EXPORT_BASE_DIR."""
+    base = Path(EXPORT_BASE_DIR).resolve()
+    target_dir = Path(usb_dir).resolve()
+    target_dir.relative_to(base)  # raises ValueError if outside base
+    candidate = (target_dir / name).resolve()
+    candidate.relative_to(base)   # guard against filename tricks
+    return candidate
+
+
 def _safe_export_path(target_dir: str, filename: str) -> Path:
     """Return resolved destination path; raises ValueError if outside EXPORT_BASE_DIR."""
     base = Path(EXPORT_BASE_DIR).resolve()
