@@ -36,3 +36,48 @@ h1, h2, h3, h4, h5, h6,
   font-weight: 600;
   color: var(--monk-text);
 }
+
+/* 3. Navbar
+   ────────────────────────────────────────────────────────────────────────── */
+.monk-navbar {
+  background-color: var(--monk-surface);
+  border-bottom: 1px solid var(--monk-border);
+  box-shadow: var(--monk-shadow);
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.monk-navbar__brand {
+  font-family: 'Figtree', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--monk-primary) !important;
+  letter-spacing: -0.01em;
+}
+.monk-navbar__brand:hover {
+  color: var(--monk-primary-dark) !important;
+}
+
+.monk-navbar__link {
+  color: var(--monk-muted) !important;
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--monk-radius);
+  transition: color .15s ease, background-color .15s ease;
+}
+.monk-navbar__link:hover {
+  color: var(--monk-primary) !important;
+  background-color: #EFF6FF;
+}
+.monk-navbar__link.active {
+  color: var(--monk-primary) !important;
+  font-weight: 600;
+}
+
+.monk-navbar__logout {
+  color: var(--monk-muted) !important;
+}
+.monk-navbar__logout:hover {
+  color: #DC2626 !important;
+  background-color: #FEF2F2 !important;
+}
