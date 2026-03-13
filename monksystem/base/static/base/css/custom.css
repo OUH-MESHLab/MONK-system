@@ -1,0 +1,28 @@
+/* ── MONK custom styles ─────────────────────────────────────────────────────
+   Load order: bootstrap.min.css → bootstrap-icons.css → custom.css
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* 1. Design tokens
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  --monk-primary:      #2563EB;
+  --monk-primary-dark: #1D4ED8;
+  --monk-blue-soft:    #3B82F6;
+  --monk-cta:          #F97316;
+  --monk-bg:           #F8FAFC;
+  --monk-surface:      #FFFFFF;
+  --monk-text:         #1E293B;
+  --monk-muted:        #64748B;
+  --monk-border:       #E2E8F0;
+  --monk-radius:       0.5rem;
+  --monk-radius-lg:    0.75rem;
+  --monk-shadow:       0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+  --monk-shadow-md:    0 4px 12px rgba(0,0,0,.10);
+}
+
+/* 2. Base
+   ────────────────────────────────────────────────────────────────────────── */
+body {
+  background-color: var(--monk-bg);
+  color: var(--monk-text);
+}
