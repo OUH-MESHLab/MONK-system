@@ -1,66 +1,102 @@
 {% extends 'main.html' %}
 
-{% load static %}
-
 {% block title %}Home — MONK{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
+<div class="container py-5">
 
-    <div class="p-4 mb-4 bg-dark text-white rounded">
-        <h1 class="mb-2">MONK</h1>
-        <p class="mb-0 text-white-50">
-            Medical waveform management for Nihon-Kohden MFER data.
-            Import, organize, visualize, and export ECG and vital-sign recordings.
-        </p>
+    <!-- Hero -->
+    <div class="monk-hero mb-5">
+        <div class="monk-hero__body">
+            <div class="monk-hero__brand">
+                <i class="bi bi-activity"></i> MONK
+            </div>
+            <p class="monk-hero__sub">
+                Nihon-Kohden MFER waveform management —
+                import, visualize, and export ECG and vital-sign recordings.
+            </p>
+        </div>
+        {% if total_files > 0 %}
+        <div class="monk-stat-pill">
+            <i class="bi bi-file-earmark-medical text-primary"></i>
+            <span><strong>{{ total_files }}</strong> file{{ total_files|pluralize }} imported</span>
+        </div>
+        {% endif %}
     </div>
 
-    <div class="row text-center g-4">
-
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <i class="bi bi-cloud-upload fs-2 text-primary mb-2"></i>
-                    <h3 class="card-title">Import Files</h3>
-                    <p class="card-text">Upload .mwf waveform files from your computer or a server directory.</p>
-                    <a href="{% url 'import_file' %}" class="btn btn-primary">Import</a>
-                </div>
-            </div>
+    <!-- Workflow steps -->
+    <div class="monk-workflow mb-5">
+        <div class="monk-workflow__step">
+            <div class="monk-workflow__num">1</div>
+            <div class="monk-workflow__icon"><i class="bi bi-usb-drive"></i></div>
+            <div class="monk-workflow__label">Import</div>
+            <div class="monk-workflow__desc">Plug in a USB drive and import <code>.mwf</code> files</div>
         </div>
-
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <i class="bi bi-file-earmark-medical fs-2 text-primary mb-2"></i>
-                    <h3 class="card-title">View Files</h3>
-                    <p class="card-text">Browse, visualize, and export your imported waveform recordings.</p>
-                    <a href="{% url 'view_files' %}" class="btn btn-primary">Browse</a>
-                </div>
-            </div>
+        <div class="monk-workflow__arrow"><i class="bi bi-chevron-right"></i></div>
+        <div class="monk-workflow__step">
+            <div class="monk-workflow__num">2</div>
+            <div class="monk-workflow__icon"><i class="bi bi-graph-up"></i></div>
+            <div class="monk-workflow__label">Visualize</div>
+            <div class="monk-workflow__desc">Plot waveform channels interactively</div>
         </div>
-
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <i class="bi bi-briefcase fs-2 text-primary mb-2"></i>
-                    <h3 class="card-title">View Projects</h3>
-                    <p class="card-text">Manage research projects and control access to subjects and recordings.</p>
-                    <a href="{% url 'view_projects' %}" class="btn btn-primary">Projects</a>
-                </div>
-            </div>
+        <div class="monk-workflow__arrow"><i class="bi bi-chevron-right"></i></div>
+        <div class="monk-workflow__step">
+            <div class="monk-workflow__num">3</div>
+            <div class="monk-workflow__icon"><i class="bi bi-filetype-csv"></i></div>
+            <div class="monk-workflow__label">Export</div>
+            <div class="monk-workflow__desc">Save selected channels as CSV to external media</div>
         </div>
-
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <i class="bi bi-journal-bookmark fs-2 text-primary mb-2"></i>
-                    <h3 class="card-title">View Subjects</h3>
-                    <p class="card-text">Explore subject records extracted from imported waveform file headers.</p>
-                    <a href="{% url 'view_subjects' %}" class="btn btn-primary">Subjects</a>
-                </div>
-            </div>
-        </div>
-
     </div>
+
+    <!-- Primary actions -->
+    <div class="row g-3 mb-5">
+        <div class="col-md-6">
+            <a href="{% url 'import_file' %}" class="monk-action-card">
+                <div class="monk-action-card__icon bg-primary-subtle">
+                    <i class="bi bi-upload text-primary"></i>
+                </div>
+                <div class="monk-action-card__body">
+                    <div class="monk-action-card__title">Import Files</div>
+                    <div class="monk-action-card__desc">Load <code>.mwf</code> recordings from USB or server</div>
+                </div>
+                <i class="bi bi-chevron-right monk-action-card__arrow"></i>
+            </a>
+        </div>
+        <div class="col-md-6">
+            <a href="{% url 'view_files' %}" class="monk-action-card">
+                <div class="monk-action-card__icon bg-success-subtle">
+                    <i class="bi bi-files text-success"></i>
+                </div>
+                <div class="monk-action-card__body">
+                    <div class="monk-action-card__title">Browse Files</div>
+                    <div class="monk-action-card__desc">Open, visualize, and export imported recordings</div>
+                </div>
+                <i class="bi bi-chevron-right monk-action-card__arrow"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent files -->
+    {% if recent_files %}
+    <div class="monk-recent">
+        <h5 class="monk-recent__heading">
+            <i class="bi bi-clock-history me-2 text-muted"></i>Recent
+        </h5>
+        <div class="list-group monk-recent__list">
+            {% for file in recent_files %}
+            <a href="{% url 'file' file.id %}" class="list-group-item list-group-item-action monk-recent__item">
+                <i class="bi bi-file-earmark-waveform me-2 text-primary"></i>
+                <span class="monk-recent__name">{{ file.title }}</span>
+                {% with file.fileimport_set.first as imp %}
+                {% if imp %}
+                <small class="text-muted ms-auto">{{ imp.imported_at|date:"Y-m-d H:i" }}</small>
+                {% endif %}
+                {% endwith %}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
 </div>
 {% endblock %}

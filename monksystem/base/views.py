@@ -32,7 +32,21 @@ from .utils import (
 @login_required
 @require_GET
 def home_page(request):
-    return render(request, "base/home.html")
+    try:
+        user_profile = request.user.userprofile
+        total_files = File.objects.filter(fileimport__user=user_profile).distinct().count()
+        recent_files = (
+            File.objects.filter(fileimport__user=user_profile)
+            .distinct()
+            .order_by("-fileimport__imported_at")[:5]
+        )
+    except UserProfile.DoesNotExist:
+        total_files = 0
+        recent_files = File.objects.none()
+    return render(request, "base/home.html", {
+        "total_files": total_files,
+        "recent_files": recent_files,
+    })
 
 
 @login_required
