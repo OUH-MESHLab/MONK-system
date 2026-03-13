@@ -232,3 +232,90 @@ h1, h2, h3, h4, h5, h6,
   display: block;
   margin-bottom: 1rem;
 }
+
+/* 6. File detail
+   ────────────────────────────────────────────────────────────────────────── */
+.monk-file-icon-lg {
+  width: 3rem;
+  height: 3rem;
+  background: #EFF6FF;
+  border-radius: var(--monk-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--monk-primary);
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+/* Collapsible header card */
+.monk-header-card {
+  background: var(--monk-surface);
+  border: 1px solid var(--monk-border);
+  border-radius: var(--monk-radius);
+  overflow: hidden;
+}
+.monk-header-card__toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #F8FAFC;
+  border: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--monk-text);
+  cursor: pointer;
+}
+.monk-header-card__toggle:hover { background: #EFF6FF; color: var(--monk-primary); }
+.monk-header-card__chevron {
+  transition: transform .2s ease;
+}
+.monk-header-card__toggle[aria-expanded="true"] .monk-header-card__chevron {
+  transform: rotate(180deg);
+}
+.monk-header-card__pre {
+  margin: 0;
+  padding: 1rem;
+  font-size: 0.8rem;
+  background: #1E293B;
+  color: #E2E8F0;
+  border-top: 1px solid var(--monk-border);
+  overflow-x: auto;
+  max-height: 300px;
+}
+
+/* Tabs */
+.monk-tabs {
+  border-bottom: none;
+  gap: 0.25rem;
+}
+.monk-tab {
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--monk-border);
+  border-bottom: none;
+  border-radius: var(--monk-radius) var(--monk-radius) 0 0;
+  background: #F1F5F9;
+  color: var(--monk-muted);
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.monk-tab:hover {
+  background: #E2E8F0;
+  color: var(--monk-text);
+}
+.monk-tab.active {
+  background: var(--monk-primary);
+  color: #fff;
+  border-color: var(--monk-primary);
+}
+
+.monk-tab-content {
+  background: var(--monk-surface);
+  border: 1px solid var(--monk-border);
+  border-radius: 0 var(--monk-radius) var(--monk-radius) var(--monk-radius);
+  padding: 1.5rem;
+}
