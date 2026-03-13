@@ -319,3 +319,50 @@ h1, h2, h3, h4, h5, h6,
   border-radius: 0 var(--monk-radius) var(--monk-radius) var(--monk-radius);
   padding: 1.5rem;
 }
+
+/* 7. Micro-interactions
+   ────────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+
+  /* Buttons */
+  .btn {
+    transition: filter .15s ease, transform .1s ease, box-shadow .15s ease;
+  }
+  .btn:hover:not(:disabled) {
+    filter: brightness(1.07);
+  }
+  .btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  /* Cards (generic Bootstrap cards) */
+  .card {
+    transition: box-shadow .2s ease;
+  }
+  .card:hover {
+    box-shadow: var(--monk-shadow-md);
+  }
+
+  /* Links */
+  a {
+    transition: color .15s ease;
+  }
+
+  /* Form controls — subtle focus ring in brand colour */
+  .form-control:focus,
+  .form-select:focus {
+    border-color: var(--monk-blue-soft);
+    box-shadow: 0 0 0 3px rgba(59,130,246,.2);
+  }
+
+  /* Alerts fade in */
+  .alert {
+    animation: monk-fadein .25s ease;
+  }
+
+  @keyframes monk-fadein {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+}
