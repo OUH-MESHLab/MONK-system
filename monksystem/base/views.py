@@ -448,12 +448,13 @@ def import_from_directory(request):
             messages.success(request, f"{imported} file(s) imported successfully.")
         return redirect("view_files")
 
-    # GET: list available .mwf files
+    # GET: list available .mwf files (search recursively for CNS subdirectory layout)
     try:
         base_path = Path(base_dir).resolve()
         available = sorted(
-            f.name for f in base_path.iterdir()
-            if f.is_file() and f.suffix.lower() == ".mwf"
+            str(f.relative_to(base_path))
+            for f in base_path.rglob("*.mwf")
+            if f.is_file()
         )
     except OSError as exc:
         messages.error(request, f"Cannot read import directory: {exc}")

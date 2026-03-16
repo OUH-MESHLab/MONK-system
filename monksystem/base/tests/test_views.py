@@ -1,6 +1,8 @@
 import os
 import tempfile
-from django.test import TestCase, Client
+from pathlib import Path
+from unittest.mock import patch
+from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -133,3 +135,148 @@ class TestViews(TestCase):
             response = self.client.post(reverse('import_multiple_files'), {'file_field': files}, follow=True)
             self.assertEqual(response.status_code, 200)
             self.assertTrue(File.objects.filter(title__contains='test').count(), 2)
+
+
+class TestImportFromDirectory(TestCase):
+    """Tests for the server-side directory import view, including recursive (CNS) subdirectory layout."""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='diruser', password='pass1234')
+        UserProfile.objects.update_or_create(
+            user=self.user, defaults={"name": "Dir User", "mobile": "000"}
+        )
+        self.client.login(username='diruser', password='pass1234')
+
+    # ------------------------------------------------------------------
+    # GET – listing
+    # ------------------------------------------------------------------
+
+    def test_get_lists_flat_mwf_files(self):
+        """Files directly in FILE_IMPORT_BASE_DIR are listed."""
+        with tempfile.TemporaryDirectory() as d:
+            Path(d, 'flat.mwf').write_bytes(b'x')
+            with override_settings(FILE_IMPORT_BASE_DIR=d):
+                response = self.client.get(reverse('import_from_directory'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'flat.mwf')
+
+    def test_get_lists_mwf_files_in_subdirectories(self):
+        """CNS layout: .mwf files nested inside device/timestamp subdirs are found recursively."""
+        with tempfile.TemporaryDirectory() as d:
+            subdir = Path(d, '172016007006_20260316154702969')
+            subdir.mkdir()
+            (subdir / 'CnsMferOutput_013469DE.mwf').write_bytes(b'x')
+            with override_settings(FILE_IMPORT_BASE_DIR=d):
+                response = self.client.get(reverse('import_from_directory'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'CnsMferOutput_013469DE.mwf')
+
+    def test_get_relative_path_includes_subdirectory(self):
+        """The checkbox value submitted by the form must contain the subdirectory component."""
+        with tempfile.TemporaryDirectory() as d:
+            subdir = Path(d, '172016007006_20260316154702969')
+            subdir.mkdir()
+            (subdir / 'CnsMferOutput_013469DE.mwf').write_bytes(b'x')
+            with override_settings(FILE_IMPORT_BASE_DIR=d):
+                response = self.client.get(reverse('import_from_directory'))
+        expected = '172016007006_20260316154702969/CnsMferOutput_013469DE.mwf'
+        self.assertContains(response, expected)
+
+    def test_get_both_flat_and_nested_files_listed(self):
+        """Flat and nested .mwf files both appear in the same listing."""
+        with tempfile.TemporaryDirectory() as d:
+            Path(d, 'flat.mwf').write_bytes(b'x')
+            subdir = Path(d, '172016007006_20260316182241688')
+            subdir.mkdir()
+            (subdir / 'CnsMferOutput_01355D77.mwf').write_bytes(b'x')
+            with override_settings(FILE_IMPORT_BASE_DIR=d):
+                response = self.client.get(reverse('import_from_directory'))
+        self.assertContains(response, 'flat.mwf')
+        self.assertContains(response, 'CnsMferOutput_01355D77.mwf')
+
+    def test_get_empty_directory_shows_no_files_message(self):
+        with tempfile.TemporaryDirectory() as d:
+            with override_settings(FILE_IMPORT_BASE_DIR=d):
+                response = self.client.get(reverse('import_from_directory'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No .mwf files found')
+
+    def test_get_non_mwf_files_not_listed(self):
+        with tempfile.TemporaryDirectory() as d:
+            Path(d, 'notes.txt').write_bytes(b'x')
+            Path(d, 'data.csv').write_bytes(b'x')
+            with override_settings(FILE_IMPORT_BASE_DIR=d):
+                response = self.client.get(reverse('import_from_directory'))
+        self.assertNotContains(response, 'notes.txt')
+        self.assertNotContains(response, 'data.csv')
+
+    def test_get_requires_login(self):
+        self.client.logout()
+        with tempfile.TemporaryDirectory() as d:
+            with override_settings(FILE_IMPORT_BASE_DIR=d):
+                response = self.client.get(reverse('import_from_directory'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login', response['Location'])
+
+    def test_get_unconfigured_redirects(self):
+        """If FILE_IMPORT_BASE_DIR is empty the view redirects with an error."""
+        with override_settings(FILE_IMPORT_BASE_DIR=''):
+            response = self.client.get(reverse('import_from_directory'))
+        self.assertEqual(response.status_code, 302)
+
+    # ------------------------------------------------------------------
+    # POST – import
+    # ------------------------------------------------------------------
+
+    def test_post_imports_flat_file(self):
+        """A flat .mwf file (no subdir) can be imported via POST."""
+        with tempfile.TemporaryDirectory() as d:
+            Path(d, 'flat.mwf').write_bytes(b'mwf-bytes')
+            with override_settings(FILE_IMPORT_BASE_DIR=d):
+                with patch('base.views.process_and_create_subject'):
+                    response = self.client.post(
+                        reverse('import_from_directory'),
+                        {'filenames': ['flat.mwf']},
+                    )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(File.objects.filter(title='flat').exists())
+
+    def test_post_imports_file_from_subdirectory(self):
+        """A .mwf file nested in a CNS subdirectory is imported correctly."""
+        with tempfile.TemporaryDirectory() as d:
+            subdir = Path(d, '172016007006_20260316154702969')
+            subdir.mkdir()
+            (subdir / 'CnsMferOutput_013469DE.mwf').write_bytes(b'mwf-bytes')
+            rel = '172016007006_20260316154702969/CnsMferOutput_013469DE.mwf'
+            with override_settings(FILE_IMPORT_BASE_DIR=d):
+                with patch('base.views.process_and_create_subject'):
+                    response = self.client.post(
+                        reverse('import_from_directory'),
+                        {'filenames': [rel]},
+                    )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(File.objects.filter(title='CnsMferOutput_013469DE').exists())
+
+    def test_post_rejects_path_traversal(self):
+        """A filename containing ../ path traversal is rejected without importing."""
+        with tempfile.TemporaryDirectory() as d:
+            with override_settings(FILE_IMPORT_BASE_DIR=d):
+                response = self.client.post(
+                    reverse('import_from_directory'),
+                    {'filenames': ['../../etc/passwd']},
+                    follow=True,
+                )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(File.objects.count(), 0)
+
+    def test_post_no_files_selected_shows_error(self):
+        with tempfile.TemporaryDirectory() as d:
+            with override_settings(FILE_IMPORT_BASE_DIR=d):
+                response = self.client.post(
+                    reverse('import_from_directory'),
+                    {'filenames': []},
+                    follow=True,
+                )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(File.objects.count(), 0)
