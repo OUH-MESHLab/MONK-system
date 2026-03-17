@@ -16,17 +16,18 @@
                     <form method="post" action="{% url 'import_from_directory' %}">
                         {% csrf_token %}
                         <div class="list-group mb-3">
+                            <label class="list-group-item list-group-item-action fw-semibold">
+                                <input type="checkbox" id="selectAll" class="mr-2">
+                                Select all
+                            </label>
                             {% for name in available_files %}
                             <label class="list-group-item list-group-item-action">
-                                <input type="checkbox" name="filenames" value="{{ name }}" class="mr-2">
+                                <input type="checkbox" name="filenames" value="{{ name }}" class="file-checkbox mr-2">
                                 {{ name }}
                             </label>
                             {% endfor %}
                         </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="selectAll">
-                                Select all
-                            </button>
+                        <div class="d-flex justify-content-end">
                             <button type="submit" class="btn btn-primary">Import selected</button>
                         </div>
                     </form>
@@ -48,11 +49,19 @@
 </div>
 
 <script>
-    document.getElementById('selectAll').addEventListener('click', function () {
-        var checkboxes = document.querySelectorAll('input[name="filenames"]');
-        var allChecked = Array.from(checkboxes).every(function (cb) { return cb.checked; });
-        checkboxes.forEach(function (cb) { cb.checked = !allChecked; });
-        this.textContent = allChecked ? 'Select all' : 'Deselect all';
+    var selectAll = document.getElementById('selectAll');
+    var fileCheckboxes = document.querySelectorAll('.file-checkbox');
+
+    selectAll.addEventListener('change', function () {
+        fileCheckboxes.forEach(function (cb) { cb.checked = selectAll.checked; });
+    });
+
+    fileCheckboxes.forEach(function (cb) {
+        cb.addEventListener('change', function () {
+            selectAll.checked = Array.from(fileCheckboxes).every(function (c) { return c.checked; });
+            selectAll.indeterminate = !selectAll.checked &&
+                Array.from(fileCheckboxes).some(function (c) { return c.checked; });
+        });
     });
 </script>
 {% endblock %}

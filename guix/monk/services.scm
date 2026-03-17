@@ -164,6 +164,7 @@
                       (mkdir-p dir)))
                   (list #$data-dir
                         (string-append #$data-dir "/media")
+                        (string-append #$data-dir "/media/nihon_kohden_files")
                         (string-append #$data-dir "/static")
                         "/var/log/monk"))
 
@@ -239,6 +240,7 @@
            (list #$data-dir
                  (string-append #$data-dir "/db.sqlite3")
                  (string-append #$data-dir "/media")
+                 (string-append #$data-dir "/media/nihon_kohden_files")
                  (string-append #$data-dir "/static")
                  "/var/log/monk")))))))
 
