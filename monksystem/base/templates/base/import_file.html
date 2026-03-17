@@ -353,5 +353,25 @@
 
     if (tab.classList.contains('active')) { initialized = true; browse(BASE_PATH); }
 })();
+
+// ── Submit spinners for all import forms ─────────────────────────────────────
+['single', 'batch'].forEach(function (tabId) {
+    var form = document.querySelector('#' + tabId + ' form');
+    if (!form) return;
+    form.addEventListener('submit', function () {
+        var btn = form.querySelector('[type=submit]');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Importing\u2026';
+    });
+});
+
+var usbForm = document.getElementById('usb-import-form');
+if (usbForm) {
+    usbForm.addEventListener('submit', function () {
+        var btn = document.getElementById('usb-import-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Importing\u2026';
+    });
+}
 </script>
 {% endblock %}

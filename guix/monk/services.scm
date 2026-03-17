@@ -20,6 +20,7 @@
             monk-configuration-host
             monk-configuration-port
             monk-configuration-workers
+            monk-configuration-timeout
             monk-configuration-secret-key
             monk-configuration-allowed-hosts
             monk-configuration-data-directory
@@ -43,6 +44,9 @@
   (port            monk-configuration-port             (default 8000))
   ;; Number of gunicorn worker processes.
   (workers         monk-configuration-workers          (default 4))
+  ;; Gunicorn worker timeout in seconds.  Large .mwf files with many sequences
+  ;; can take well over the 30 s default; 300 s gives a safe margin.
+  (timeout         monk-configuration-timeout          (default 300))
   ;; Django SECRET_KEY — must be set; no default to avoid accidental insecurity.
   (secret-key      monk-configuration-secret-key       (default #f))
   ;; Django ALLOWED_HOSTS list.
@@ -73,6 +77,7 @@
          (host    (monk-configuration-host config))
          (port    (number->string (monk-configuration-port config)))
          (workers (number->string (monk-configuration-workers config)))
+         (timeout (number->string (monk-configuration-timeout config)))
          (bind    (string-append host ":" port)))
     (program-file "monk-start"
       #~(begin
@@ -94,7 +99,8 @@
                  (list "monk-gunicorn"
                        "monksystem.wsgi:application"
                        "--bind" #$bind
-                       "--workers" #$workers))))))
+                       "--workers" #$workers
+                       "--timeout" #$timeout))))))
 
 
 ;;;

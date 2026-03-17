@@ -63,5 +63,11 @@
                 Array.from(fileCheckboxes).some(function (c) { return c.checked; });
         });
     });
+
+    document.querySelector('form').addEventListener('submit', function (e) {
+        var btn = this.querySelector('[type=submit]');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Importing\u2026';
+    });
 </script>
 {% endblock %}

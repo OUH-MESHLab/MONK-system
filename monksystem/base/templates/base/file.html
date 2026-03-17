@@ -96,6 +96,7 @@
             <div id="loading-message" class="alert alert-info mt-3" style="display:none;">
                 Loading… <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
             </div>
+            <div id="graph-error" class="alert alert-warning mt-3" style="display:none;"></div>
             <div id="graph-container" class="mt-3"></div>
         </div>
 
@@ -300,23 +301,32 @@
         var url = `/plot_graph/${file_id}/?combined=${combined}&rows=${rows}`;
 
         var loadingMessage = document.getElementById('loading-message');
+        var graphError = document.getElementById('graph-error');
         loadingMessage.style.display = 'block';
+        graphError.style.display = 'none';
 
         fetch(url)
             .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok: ' + response.statusText);
+                if (!response.ok) throw new Error(response.status);
                 return response.json();
             })
             .then(data => {
-                if (!data.error) {
-                    var closeBtn = '<div style="padding:8px"><button onclick="window.close()" style="font-size:1rem;padding:6px 16px;cursor:pointer">&#x2715; Close</button></div>';
-                    var html = '<html><head><meta charset="utf-8"><title>Plot Graph</title></head><body>' + closeBtn + data.graph_html + '</body></html>';
-                    var blob = new Blob([html], {type: 'text/html;charset=utf-8'});
-                    var url = URL.createObjectURL(blob);
-                    window.open(url, '_blank');
+                if (data.error) {
+                    throw new Error('server');
                 }
+                var closeBtn = '<div style="padding:8px"><button onclick="window.close()" style="font-size:1rem;padding:6px 16px;cursor:pointer">&#x2715; Close</button></div>';
+                var html = '<html><head><meta charset="utf-8"><title>Plot Graph</title></head><body>' + closeBtn + data.graph_html + '</body></html>';
+                var blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+                var url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
             })
-            .catch(error => console.error('Error:', error))
+            .catch(error => {
+                graphError.style.display = 'block';
+                graphError.innerHTML =
+                    '<i class="bi bi-exclamation-triangle-fill me-2"></i>' +
+                    '<strong>Could not generate plot.</strong> The file may be too large to visualize at once. ' +
+                    'Try reducing the <em>Rows</em> value and trying again.';
+            })
             .finally(() => loadingMessage.style.display = 'none');
     });
 </script>

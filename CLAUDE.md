@@ -8,10 +8,9 @@ MONK is a Django web application for managing and accessing Nihon-Kohden MFER me
 
 ## Bootstrap on GNU/Guix
 
-The repo has a `manifest.scm` and `.envrc` for direnv. On first `cd` into the repo, direnv will:
-1. Activate the Guix environment from `manifest.scm` (all standard deps)
-2. Clone monklib with its pybind11 submodule into `.monklib-src/`
-3. Build monklib and install it into `.venv/` (inheriting Guix packages)
+The repo has a `manifest.scm` and `.envrc` for direnv. `python-monklib` is loaded directly
+from `guix/monk/packages.scm` (the local channel module) — no extra `guix pull` or global
+channel configuration required.
 
 ```bash
 # One-time: authorize the project directory for guix shell auto-loading
@@ -21,7 +20,8 @@ echo $PWD >> ~/.config/guix/shell-authorized-directories
 direnv allow
 ```
 
-On first `cd` into the repo, direnv will clone monklib, build it (takes ~1 min), and cache it in `.venv/`. On subsequent entries the cached venv is reused.
+On `cd` into the repo, direnv activates the Guix environment from `manifest.scm`, which
+includes `python-monklib` and all other dependencies. No venv or manual build step required.
 
 ```bash
 # Apply Django migrations (once after bootstrap)
@@ -31,11 +31,9 @@ cd monksystem && python manage.py migrate
 pytest base/tests/
 ```
 
-`monklib` is a C++/CMake/pybind11 extension not in Guix — the `.envrc` builds it with `--no-build-isolation` so Guix's cmake/ninja are used instead of pip's downloaded cmake wrapper. If the build fails, delete `.venv/` and re-enter the directory.
-
 ## Commands
 
-All commands run from `monksystem/` directory (with `.venv` active):
+All commands run from `monksystem/` directory (inside the direnv Guix shell):
 
 ```bash
 # Run development server

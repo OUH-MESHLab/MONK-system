@@ -69,4 +69,17 @@
     {% endif %}
 
 </div>
+
+<div id="page-loading-overlay"
+     style="display:none;position:fixed;inset:0;background:rgba(248,250,252,0.85);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:1rem;">
+    <div class="spinner-border text-primary" role="status" style="width:3rem;height:3rem;"></div>
+    <span class="text-muted">Loading…</span>
+</div>
+<script>
+document.querySelectorAll('.monk-file-card').forEach(function (link) {
+    link.addEventListener('click', function () {
+        document.getElementById('page-loading-overlay').style.display = 'flex';
+    });
+});
+</script>
 {% endblock %}
