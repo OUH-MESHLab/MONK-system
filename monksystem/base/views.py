@@ -442,9 +442,14 @@ def import_from_directory(request):
                     new_file = File.objects.create(file=django_file, title=title)
                     FileImport.objects.create(user=user_profile, file=new_file)
                     process_and_create_subject(new_file, request)
+            except Exception as e:
+                messages.error(request, f"Failed to import {name}: {e}")
+                continue
+            imported += 1
+            # Best-effort cleanup: delete the source file and any ancestor
+            # directories that are now empty, stopping at base_dir.
+            try:
                 safe_path.unlink(missing_ok=True)
-                # Remove any ancestor directories that became empty after the
-                # file was deleted, stopping at base_dir.
                 parent = safe_path.parent
                 base = Path(base_dir).resolve()
                 while parent != base:
@@ -455,9 +460,8 @@ def import_from_directory(request):
                     except OSError:
                         break
                     parent = parent.parent
-                imported += 1
-            except Exception as e:
-                messages.error(request, f"Failed to import {name}: {e}")
+            except OSError:
+                pass
 
         if imported:
             messages.success(request, f"{imported} file(s) imported successfully.")
