@@ -305,29 +305,13 @@
         loadingMessage.style.display = 'block';
         graphError.style.display = 'none';
 
-        fetch(url)
-            .then(response => {
-                if (!response.ok) throw new Error(response.status);
-                return response.json();
-            })
-            .then(data => {
-                if (data.error) {
-                    throw new Error('server');
-                }
-                var closeBtn = '<div style="padding:8px"><button onclick="window.close()" style="font-size:1rem;padding:6px 16px;cursor:pointer">&#x2715; Close</button></div>';
-                var html = '<html><head><meta charset="utf-8"><title>Plot Graph</title></head><body>' + closeBtn + data.graph_html + '</body></html>';
-                var blob = new Blob([html], {type: 'text/html;charset=utf-8'});
-                var url = URL.createObjectURL(blob);
-                window.open(url, '_blank');
-            })
-            .catch(error => {
-                graphError.style.display = 'block';
-                graphError.innerHTML =
-                    '<i class="bi bi-exclamation-triangle-fill me-2"></i>' +
-                    '<strong>Could not generate plot.</strong> The file may be too large to visualize at once. ' +
-                    'Try reducing the <em>Rows</em> value and trying again.';
-            })
-            .finally(() => loadingMessage.style.display = 'none');
+        window.open(url, '_blank');
+
+        // Hide the loading indicator after a short delay — the plot opens in a new tab
+        // and we have no way to know exactly when it has loaded.
+        setTimeout(function () {
+            loadingMessage.style.display = 'none';
+        }, 3000);
     });
 </script>
 {% endblock %}

@@ -382,7 +382,19 @@ def plot_graph(request, file_id):
         fig.for_each_yaxis(lambda ax: ax.update(exponentformat="none", tickformat=".6~g"))
         fig.for_each_xaxis(lambda ax: ax.update(exponentformat="none", tickformat=".6~g"))
 
-        graph_html = fig.to_html(full_html=False, include_plotlyjs=True)
-        return JsonResponse({"graph_html": graph_html})
+        close_btn = (
+            '<div style="padding:8px">'
+            '<button onclick="window.close()" '
+            'style="font-size:1rem;padding:6px 16px;cursor:pointer">&#x2715; Close</button>'
+            '</div>'
+        )
+        graph_html = fig.to_html(
+            full_html=True,
+            include_plotlyjs=True,
+            div_id="graph",
+        )
+        # Inject the close button right after <body>
+        html = graph_html.replace("<body>", f"<body>{close_btn}", 1)
+        return HttpResponse(html, content_type="text/html")
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
