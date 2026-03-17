@@ -291,3 +291,53 @@ class TestImportFromDirectory(TestCase):
                 )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(File.objects.count(), 0)
+
+    def test_post_removes_empty_subdirectory_after_import(self):
+        """After importing the only file in a CNS subdirectory, the now-empty subdir is deleted."""
+        with tempfile.TemporaryDirectory() as d:
+            subdir = Path(d, '172016007006_20260316154702969')
+            subdir.mkdir()
+            mwf = subdir / 'CnsMferOutput_013469DE.mwf'
+            mwf.write_bytes(b'mwf-bytes')
+            rel = '172016007006_20260316154702969/CnsMferOutput_013469DE.mwf'
+            with override_settings(FILE_IMPORT_BASE_DIR=d):
+                with patch('base.views.process_and_create_subject'):
+                    self.client.post(
+                        reverse('import_from_directory'),
+                        {'filenames': [rel]},
+                    )
+            self.assertFalse(subdir.exists(), "empty subdirectory should have been removed")
+
+    def test_post_keeps_subdirectory_when_other_files_remain(self):
+        """A subdirectory that still contains other files after import is NOT removed."""
+        with tempfile.TemporaryDirectory() as d:
+            subdir = Path(d, '172016007006_20260316154702969')
+            subdir.mkdir()
+            (subdir / 'CnsMferOutput_013469DE.mwf').write_bytes(b'mwf-bytes')
+            (subdir / 'CnsMferOutput_ANOTHER.mwf').write_bytes(b'mwf-bytes')
+            rel = '172016007006_20260316154702969/CnsMferOutput_013469DE.mwf'
+            with override_settings(FILE_IMPORT_BASE_DIR=d):
+                with patch('base.views.process_and_create_subject'):
+                    self.client.post(
+                        reverse('import_from_directory'),
+                        {'filenames': [rel]},
+                    )
+            self.assertTrue(subdir.exists(), "subdirectory with remaining files must not be removed")
+
+    def test_post_directory_cleanup_does_not_delete_files(self):
+        """The cleanup walk only removes directories, never files."""
+        with tempfile.TemporaryDirectory() as d:
+            subdir = Path(d, 'sub')
+            subdir.mkdir()
+            mwf = subdir / 'test.mwf'
+            mwf.write_bytes(b'mwf-bytes')
+            sibling_file = Path(d, 'sibling.txt')
+            sibling_file.write_bytes(b'keep me')
+            rel = 'sub/test.mwf'
+            with override_settings(FILE_IMPORT_BASE_DIR=d):
+                with patch('base.views.process_and_create_subject'):
+                    self.client.post(
+                        reverse('import_from_directory'),
+                        {'filenames': [rel]},
+                    )
+            self.assertTrue(sibling_file.exists(), "files in base_dir must never be deleted by cleanup")

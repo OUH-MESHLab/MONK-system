@@ -448,8 +448,10 @@ def import_from_directory(request):
                 parent = safe_path.parent
                 base = Path(base_dir).resolve()
                 while parent != base:
+                    if not parent.is_dir():
+                        break
                     try:
-                        parent.rmdir()  # only succeeds if empty
+                        parent.rmdir()  # only removes empty directories
                     except OSError:
                         break
                     parent = parent.parent
