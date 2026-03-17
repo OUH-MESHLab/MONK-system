@@ -453,8 +453,8 @@ def import_from_directory(request):
         base_path = Path(base_dir).resolve()
         available = sorted(
             str(f.relative_to(base_path))
-            for f in base_path.rglob("*.mwf")
-            if f.is_file()
+            for f in base_path.rglob("*")
+            if f.is_file() and f.suffix.lower() == ".mwf"
         )
     except OSError as exc:
         messages.error(request, f"Cannot read import directory: {exc}")

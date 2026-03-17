@@ -202,6 +202,17 @@ class TestImportFromDirectory(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'No .mwf files found')
 
+    def test_get_lists_uppercase_mwf_extension(self):
+        """Files with .MWF (uppercase) extension are found — CNS devices may use uppercase."""
+        with tempfile.TemporaryDirectory() as d:
+            subdir = Path(d, '172016007006_20260316154702969')
+            subdir.mkdir()
+            (subdir / 'CnsMferOutput_013469DE.MWF').write_bytes(b'x')
+            with override_settings(FILE_IMPORT_BASE_DIR=d):
+                response = self.client.get(reverse('import_from_directory'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'CnsMferOutput_013469DE.MWF')
+
     def test_get_non_mwf_files_not_listed(self):
         with tempfile.TemporaryDirectory() as d:
             Path(d, 'notes.txt').write_bytes(b'x')
