@@ -435,14 +435,17 @@ def import_from_directory(request):
             if not safe_path.is_file():
                 messages.error(request, f"File no longer available: {name}")
                 continue
-            with open(safe_path, "rb") as fh:
-                django_file = DjangoFile(fh, name=safe_path.name)
-                title = safe_path.stem
-                new_file = File.objects.create(file=django_file, title=title)
-                FileImport.objects.create(user=user_profile, file=new_file)
-                process_and_create_subject(new_file, request)
-            safe_path.unlink(missing_ok=True)
-            imported += 1
+            try:
+                with open(safe_path, "rb") as fh:
+                    django_file = DjangoFile(fh, name=safe_path.name)
+                    title = safe_path.stem
+                    new_file = File.objects.create(file=django_file, title=title)
+                    FileImport.objects.create(user=user_profile, file=new_file)
+                    process_and_create_subject(new_file, request)
+                safe_path.unlink(missing_ok=True)
+                imported += 1
+            except Exception as e:
+                messages.error(request, f"Failed to import {name}: {e}")
 
         if imported:
             messages.success(request, f"{imported} file(s) imported successfully.")

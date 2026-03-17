@@ -165,3 +165,24 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 # Idle logout timeout (seconds) passed to the JS idle timer in main.html.
 # Must match or be shorter than SESSION_COOKIE_AGE.
 IDLE_LOGOUT_SECONDS = 900
+
+# Log all Django request errors (500s) to a file so they can be diagnosed
+# without enabling DEBUG in production.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'django_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': '/var/log/monk/django.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['django_file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    },
+}
