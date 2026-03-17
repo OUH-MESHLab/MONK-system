@@ -300,18 +300,35 @@
         var rows = document.getElementById('rows-input').value;
         var url = `/plot_graph/${file_id}/?combined=${combined}&rows=${rows}`;
 
-        var loadingMessage = document.getElementById('loading-message');
         var graphError = document.getElementById('graph-error');
-        loadingMessage.style.display = 'block';
         graphError.style.display = 'none';
 
-        window.open(url, '_blank');
-
-        // Hide the loading indicator after a short delay — the plot opens in a new tab
-        // and we have no way to know exactly when it has loaded.
-        setTimeout(function () {
-            loadingMessage.style.display = 'none';
-        }, 3000);
+        // Open a blank window immediately so the user sees a spinner
+        // while the server is generating the plot (can take 30-60 s).
+        // Then navigate it to the plot URL — when the response arrives the
+        // server-injected overlay takes over until Plotly finishes rendering.
+        var plotWin = window.open('', '_blank');
+        if (plotWin) {
+            plotWin.document.write(
+                '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+                '<title>Loading plot\u2026</title>' +
+                '<style>' +
+                'body{margin:0;display:flex;align-items:center;justify-content:center;' +
+                'height:100vh;flex-direction:column;gap:1rem;font-family:sans-serif;background:#fff;}' +
+                '.spin{width:48px;height:48px;border:5px solid #e2e8f0;border-top-color:#2563eb;' +
+                'border-radius:50%;animation:s 0.8s linear infinite;}' +
+                '@keyframes s{to{transform:rotate(360deg)}}' +
+                '</style></head><body>' +
+                '<div class="spin"></div>' +
+                '<span style="color:#64748b;">Generating plot\u2026</span>' +
+                '</body></html>'
+            );
+            plotWin.document.close();
+            plotWin.location.href = url;
+        } else {
+            // Popup blocked — fall back to a plain open
+            window.open(url, '_blank');
+        }
     });
 </script>
 {% endblock %}
