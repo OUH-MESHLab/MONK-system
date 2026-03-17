@@ -176,6 +176,7 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
             'filename': '/var/log/monk/django.log',
+            'delay': True,
         },
     },
     'loggers': {
