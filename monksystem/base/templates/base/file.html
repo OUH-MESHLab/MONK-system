@@ -272,6 +272,9 @@
             modal.hide();
 
             confirmBtn.disabled = true;
+            resultDiv.style.display = '';
+            resultDiv.innerHTML = '<div class="d-flex align-items-center gap-2 text-muted"><div class="spinner-border spinner-border-sm" role="status"></div><span>Exporting…</span></div>';
+
             const form = document.getElementById('csv-export-form');
             const formData = new FormData(form);
 
