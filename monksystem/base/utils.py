@@ -382,19 +382,34 @@ def plot_graph(request, file_id):
         fig.for_each_yaxis(lambda ax: ax.update(exponentformat="none", tickformat=".6~g"))
         fig.for_each_xaxis(lambda ax: ax.update(exponentformat="none", tickformat=".6~g"))
 
-        close_btn = (
-            '<div style="padding:8px">'
-            '<button onclick="window.close()" '
-            'style="font-size:1rem;padding:6px 16px;cursor:pointer">&#x2715; Close</button>'
-            '</div>'
-        )
         graph_html = fig.to_html(
             full_html=True,
             include_plotlyjs=True,
             div_id="graph",
         )
-        # Inject the close button right after <body>
-        html = graph_html.replace("<body>", f"<body>{close_btn}", 1)
+        inject = (
+            '<div id="_monk_loading" style="'
+            'position:fixed;inset:0;background:#fff;z-index:9999;'
+            'display:flex;align-items:center;justify-content:center;'
+            'flex-direction:column;gap:1rem;font-family:sans-serif;">'
+            '<div style="width:48px;height:48px;border:5px solid #e2e8f0;'
+            'border-top-color:#2563eb;border-radius:50%;'
+            'animation:_spin 0.8s linear infinite;"></div>'
+            '<span style="color:#64748b;">Loading plot\u2026</span>'
+            '</div>'
+            '<style>@keyframes _spin{to{transform:rotate(360deg)}}</style>'
+            '<div style="padding:8px">'
+            '<button onclick="window.close()" '
+            'style="font-size:1rem;padding:6px 16px;cursor:pointer">&#x2715; Close</button>'
+            '</div>'
+            '<script>'
+            'window.addEventListener("load",function(){'
+            'var el=document.getElementById("_monk_loading");'
+            'if(el)el.style.display="none";'
+            '});'
+            '</script>'
+        )
+        html = graph_html.replace("<body>", f"<body>{inject}", 1)
         return HttpResponse(html, content_type="text/html")
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
