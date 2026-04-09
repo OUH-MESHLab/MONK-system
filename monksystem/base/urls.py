@@ -38,4 +38,7 @@ urlpatterns = [
     path('browse-usb/', views.browse_usb_view, name='browse_usb'),
     path('scan-usb-mwf/', views.scan_usb_mwf_view, name='scan_usb_mwf'),
     path('import-from-usb/', views.import_from_usb, name='import_from_usb'),
+
+    path('manage/users/', views.manage_users, name='manage_users'),
+    path('manage/users/<int:user_id>/action/', views.manage_user_action, name='manage_user_action'),
 ]

@@ -75,6 +75,10 @@ class TestViews(TestCase):
         response = self.client.post(reverse('register'), post_data)
         self.assertEqual(response.status_code, 302)  # Check for redirect after successful registration
         self.assertTrue(User.objects.filter(username='newuser').exists())
+        # New users start inactive and are redirected to login for approval
+        new_user = User.objects.get(username='newuser')
+        self.assertFalse(new_user.is_active)
+        self.assertRedirects(response, reverse('login'))
 
     def test_view_subjects_auth(self):
         self.client.login(username='testuser', password='password123')
@@ -341,3 +345,141 @@ class TestImportFromDirectory(TestCase):
                         {'filenames': [rel]},
                     )
             self.assertTrue(sibling_file.exists(), "files in base_dir must never be deleted by cleanup")
+
+
+class TestUserManagement(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.staff = User.objects.create_user(
+            username='admin', password='adminpass', is_staff=True, is_active=True
+        )
+        self.regular = User.objects.create_user(
+            username='regular', password='regularpass', is_active=True
+        )
+        UserProfile.objects.update_or_create(
+            user=self.regular, defaults={"name": "Regular User", "mobile": "0"}
+        )
+
+    def _register(self, username='newuser'):
+        return self.client.post(reverse('register'), {
+            'username': username,
+            'name': 'New User',
+            'mobile': '1234567890',
+            'password1': 'testpassword123',
+            'password2': 'testpassword123',
+        })
+
+    # Registration behaviour
+
+    def test_register_sets_inactive(self):
+        self._register('newuser')
+        user = User.objects.get(username='newuser')
+        self.assertFalse(user.is_active)
+
+    def test_register_no_autologin(self):
+        response = self._register('newuser2')
+        self.assertFalse(response.wsgi_request.user.is_authenticated)
+
+    def test_register_redirects_to_login(self):
+        response = self._register('newuser3')
+        self.assertRedirects(response, reverse('login'))
+
+    # Login behaviour for pending account
+
+    def test_login_pending_shows_warning(self):
+        self._register('pending')
+        response = self.client.post(reverse('login'), {
+            'username': 'pending', 'password': 'testpassword123'
+        })
+        self.assertFalse(response.wsgi_request.user.is_authenticated)
+        messages_list = list(response.context['messages'])
+        texts = [str(m) for m in messages_list]
+        self.assertTrue(any('pending' in t.lower() for t in texts))
+
+    # manage_users access control
+
+    def test_manage_users_requires_login(self):
+        response = self.client.get(reverse('manage_users'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login', response['Location'])
+
+    def test_manage_users_non_staff_redirected(self):
+        self.client.login(username='regular', password='regularpass')
+        response = self.client.get(reverse('manage_users'), follow=True)
+        self.assertRedirects(response, reverse('home'))
+
+    def test_manage_users_staff_ok(self):
+        self.client.login(username='admin', password='adminpass')
+        response = self.client.get(reverse('manage_users'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'base/manage_users.html')
+
+    def test_manage_users_shows_pending(self):
+        self._register('pending2')
+        self.client.login(username='admin', password='adminpass')
+        response = self.client.get(reverse('manage_users'))
+        self.assertContains(response, 'pending2')
+
+    # Actions
+
+    def test_approve_action(self):
+        self._register('tobeapproved')
+        target = User.objects.get(username='tobeapproved')
+        self.client.login(username='admin', password='adminpass')
+        self.client.post(
+            reverse('manage_user_action', args=[target.id]),
+            {'action': 'approve'}
+        )
+        target.refresh_from_db()
+        self.assertTrue(target.is_active)
+
+    def test_deactivate_action(self):
+        self.client.login(username='admin', password='adminpass')
+        self.client.post(
+            reverse('manage_user_action', args=[self.regular.id]),
+            {'action': 'deactivate'}
+        )
+        self.regular.refresh_from_db()
+        self.assertFalse(self.regular.is_active)
+
+    def test_delete_action(self):
+        victim = User.objects.create_user(username='victim', password='pass', is_active=True)
+        self.client.login(username='admin', password='adminpass')
+        self.client.post(
+            reverse('manage_user_action', args=[victim.id]),
+            {'action': 'delete'}
+        )
+        self.assertFalse(User.objects.filter(username='victim').exists())
+
+    def test_cannot_self_deactivate(self):
+        self.client.login(username='admin', password='adminpass')
+        response = self.client.post(
+            reverse('manage_user_action', args=[self.staff.id]),
+            {'action': 'deactivate'},
+            follow=True,
+        )
+        self.staff.refresh_from_db()
+        self.assertTrue(self.staff.is_active)
+        messages_list = list(response.context['messages'])
+        self.assertTrue(any('cannot' in str(m).lower() for m in messages_list))
+
+    def test_cannot_self_delete(self):
+        self.client.login(username='admin', password='adminpass')
+        response = self.client.post(
+            reverse('manage_user_action', args=[self.staff.id]),
+            {'action': 'delete'},
+            follow=True,
+        )
+        self.assertTrue(User.objects.filter(username='admin').exists())
+        messages_list = list(response.context['messages'])
+        self.assertTrue(any('cannot' in str(m).lower() for m in messages_list))
+
+    def test_non_staff_cannot_post_action(self):
+        self.client.login(username='regular', password='regularpass')
+        response = self.client.post(
+            reverse('manage_user_action', args=[self.regular.id]),
+            {'action': 'delete'},
+            follow=True,
+        )
+        self.assertRedirects(response, reverse('home'))
+        self.assertTrue(User.objects.filter(username='regular').exists())

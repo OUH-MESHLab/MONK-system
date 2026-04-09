@@ -135,9 +135,14 @@
                                placeholder="End time…" class="form-control">
                     </div>
                 </div>
-                <button type="button" id="csv-export-btn" class="btn btn-success">
-                    <i class="bi bi-download me-1"></i>Export CSV
-                </button>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="submit" id="csv-download-btn" class="btn btn-success">
+                        <i class="bi bi-download me-1"></i>Download to Browser
+                    </button>
+                    <button type="button" id="csv-export-btn" class="btn btn-outline-secondary">
+                        <i class="bi bi-usb-drive me-1"></i>Save to Drive
+                    </button>
+                </div>
             </form>
 
             <!-- Export result alert -->
@@ -225,7 +230,12 @@
         document.querySelector('.deselect-all-btn')?.addEventListener('click', () =>
             checkboxes.forEach(cb => cb.checked = false));
 
-        // CSV export: open drive picker modal instead of submitting directly
+        // Direct browser download: plain form submit, browser handles slow responses natively
+        document.getElementById('csv-download-btn').addEventListener('click', function () {
+            resultDiv.style.display = 'none';
+        });
+
+        // Drive export: open picker modal
         const exportBtn = document.getElementById('csv-export-btn');
         const modal = new bootstrap.Modal(document.getElementById('drivepickerModal'));
         const modalBody = document.getElementById('drivepicker-body');
@@ -278,9 +288,13 @@
             const form = document.getElementById('csv-export-form');
             const formData = new FormData(form);
 
-            fetch(form.action, { method: 'POST', body: formData })
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10 * 60 * 1000); // 10 min
+
+            fetch(form.action, { method: 'POST', body: formData, signal: controller.signal })
                 .then(r => r.json())
                 .then(data => {
+                    clearTimeout(timeout);
                     resultDiv.style.display = '';
                     if (data.status === 'ok') {
                         resultDiv.innerHTML = `<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>Saved to <code>${data.path}</code></div>`;
@@ -289,8 +303,12 @@
                     }
                 })
                 .catch(e => {
+                    clearTimeout(timeout);
                     resultDiv.style.display = '';
-                    resultDiv.innerHTML = `<div class="alert alert-danger">Export failed: ${e}</div>`;
+                    const msg = e.name === 'AbortError'
+                        ? 'Export timed out (>10 min). Try a shorter time interval or fewer channels.'
+                        : `Export failed: ${e}`;
+                    resultDiv.innerHTML = `<div class="alert alert-danger">${msg}</div>`;
                 });
         });
     });

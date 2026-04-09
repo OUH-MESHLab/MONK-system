@@ -144,16 +144,19 @@ def login_page(request):
         username = request.POST.get("username").lower()
         password = request.POST.get("password")
         try:
-            User.objects.get(username=username)
+            db_user = User.objects.get(username=username)
         except User.DoesNotExist:
             messages.error(request, "User does not exist")
+            db_user = None
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
             messages.success(request, f"Logged in successfully as {user.username}.")
             return redirect("home")
+        elif db_user is not None and not db_user.is_active:
+            messages.warning(request, "Your account is pending administrator approval.")
         else:
-            messages.error(request, "Username or password does not exist")
+            messages.error(request, "Incorrect password.")
 
     context = {"page": page}
     return render(request, "base/login_register.html", context)
@@ -172,6 +175,7 @@ def register_page(request):
         if form.is_valid():
             user = form.save(commit=False)
             user.username = user.username.lower()
+            user.is_active = False
             user.save()
             UserProfile.objects.update_or_create(
                 user=user,
@@ -180,13 +184,56 @@ def register_page(request):
                     "email": form.cleaned_data.get("email", ""),
                 },
             )
-            login(request, user)
-            return redirect("home")
+            messages.info(request, "Your account has been created and is pending administrator approval.")
+            return redirect("login")
         else:
             messages.error(request, "An error occurred during registration")
 
     context = {"form": form}
     return render(request, "base/login_register.html", context)
+
+
+@login_required
+def manage_users(request):
+    if not request.user.is_staff:
+        messages.error(request, "Permission denied.")
+        return redirect("home")
+    all_users = User.objects.select_related("userprofile").order_by("date_joined")
+    return render(request, "base/manage_users.html", {
+        "pending_users": all_users.filter(is_active=False),
+        "active_users": all_users.filter(is_active=True),
+    })
+
+
+@login_required
+@require_POST
+def manage_user_action(request, user_id):
+    if not request.user.is_staff:
+        messages.error(request, "Permission denied.")
+        return redirect("home")
+    target = get_object_or_404(User, id=user_id)
+    action = request.POST.get("action")
+    if action == "approve":
+        target.is_active = True
+        target.save()
+        messages.success(request, f"User '{target.username}' has been approved.")
+    elif action == "deactivate":
+        if target == request.user:
+            messages.error(request, "You cannot deactivate your own account.")
+        else:
+            target.is_active = False
+            target.save()
+            messages.success(request, f"User '{target.username}' has been deactivated.")
+    elif action == "delete":
+        if target == request.user:
+            messages.error(request, "You cannot delete your own account.")
+        else:
+            username = target.username
+            target.delete()
+            messages.success(request, f"User '{username}' has been deleted.")
+    else:
+        messages.error(request, "Unknown action.")
+    return redirect("manage_users")
 
 
 @login_required
