@@ -535,7 +535,7 @@ def import_from_directory(request):
 @login_required
 @require_GET
 def list_export_dirs_view(request):
-    """Return JSON list of available export directories under /run/media/rafael."""
+    """Return JSON list of available export directories under /run/media/monk."""
     dirs = [{"name": name, "path": path} for name, path in list_export_dirs()]
     return JsonResponse({"dirs": dirs})
 

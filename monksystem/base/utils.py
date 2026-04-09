@@ -84,7 +84,7 @@ def process_and_create_subject(file, request):
         )
 
 
-EXPORT_BASE_DIR = "/run/media/rafael"
+EXPORT_BASE_DIR = "/run/media/monk"
 
 
 def list_export_dirs():
