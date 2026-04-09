@@ -145,31 +145,26 @@
                 </div>
             </form>
 
+            <!-- USB Export Browser (shown/hidden by JS) -->
+            <div id="usb-export-panel" class="mt-3 d-none">
+                <nav aria-label="USB export path" class="mb-2">
+                    <ol class="breadcrumb mb-0 small" id="export-breadcrumb"></ol>
+                </nav>
+                <div id="export-browser" class="list-group mb-3"></div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <button type="button" id="export-here-btn" class="btn btn-success">
+                        <i class="bi bi-usb-drive me-1"></i>Export here
+                    </button>
+                    <code id="export-current-path" class="text-muted small"></code>
+                    <button type="button" id="export-cancel-btn" class="btn btn-outline-secondary btn-sm ms-auto">
+                        Cancel
+                    </button>
+                </div>
+                <div id="export-browser-error" class="alert alert-danger d-none mt-2 small"></div>
+            </div>
+
             <!-- Export result alert -->
             <div id="csv-export-result" class="mt-3" style="display:none;"></div>
-        </div>
-
-        <!-- Drive picker modal -->
-        <div class="modal fade" id="drivepickerModal" tabindex="-1" aria-labelledby="drivepickerLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="drivepickerLabel">
-                            <i class="bi bi-usb-drive me-2"></i>Select Export Drive
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body" id="drivepicker-body">
-                        <p class="text-muted">Loading available drives…</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-success" id="drivepicker-confirm" disabled>
-                            <i class="bi bi-check-lg me-1"></i>Save to Drive
-                        </button>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Download Raw tab -->
@@ -230,88 +225,172 @@
         document.querySelector('.deselect-all-btn')?.addEventListener('click', () =>
             checkboxes.forEach(cb => cb.checked = false));
 
-        // Direct browser download: plain form submit, browser handles slow responses natively
-        document.getElementById('csv-download-btn').addEventListener('click', function () {
-            resultDiv.style.display = 'none';
-        });
-
-        // Drive export: open picker modal
-        const exportBtn = document.getElementById('csv-export-btn');
-        const modal = new bootstrap.Modal(document.getElementById('drivepickerModal'));
-        const modalBody = document.getElementById('drivepicker-body');
-        const confirmBtn = document.getElementById('drivepicker-confirm');
         const exportDirInput = document.getElementById('csv-export-dir');
         const resultDiv = document.getElementById('csv-export-result');
 
-        exportBtn.addEventListener('click', function () {
-            confirmBtn.disabled = true;
-            modalBody.innerHTML = '<p class="text-muted">Loading available drives…</p>';
-            modal.show();
-
-            fetch('{% url "list_export_dirs" %}')
-                .then(r => r.json())
-                .then(data => {
-                    if (!data.dirs || data.dirs.length === 0) {
-                        modalBody.innerHTML = '<p class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>No drives found in /run/media/rafael. Please insert a USB drive.</p>';
-                        return;
-                    }
-                    let html = '<div class="list-group">';
-                    data.dirs.forEach((d, i) => {
-                        html += `<label class="list-group-item list-group-item-action">
-                            <input class="form-check-input me-2" type="radio" name="drive-pick" value="${d.path}" id="drive_${i}">
-                            <i class="bi bi-usb-drive me-2"></i><strong>${d.name}</strong>
-                            <small class="text-muted ms-2">${d.path}</small>
-                        </label>`;
-                    });
-                    html += '</div>';
-                    modalBody.innerHTML = html;
-
-                    modalBody.querySelectorAll('input[name="drive-pick"]').forEach(radio => {
-                        radio.addEventListener('change', () => confirmBtn.disabled = false);
-                    });
-                })
-                .catch(() => {
-                    modalBody.innerHTML = '<p class="text-danger">Failed to list drives.</p>';
-                });
-        });
-
-        confirmBtn.addEventListener('click', function () {
-            const selected = modalBody.querySelector('input[name="drive-pick"]:checked');
-            if (!selected) return;
-            exportDirInput.value = selected.value;
-            modal.hide();
-
-            confirmBtn.disabled = true;
-            resultDiv.style.display = '';
-            resultDiv.innerHTML = '<div class="d-flex align-items-center gap-2 text-muted"><div class="spinner-border spinner-border-sm" role="status"></div><span>Exporting…</span></div>';
-
-            const form = document.getElementById('csv-export-form');
-            const formData = new FormData(form);
-
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 10 * 60 * 1000); // 10 min
-
-            fetch(form.action, { method: 'POST', body: formData, signal: controller.signal })
-                .then(r => r.json())
-                .then(data => {
-                    clearTimeout(timeout);
-                    resultDiv.style.display = '';
-                    if (data.status === 'ok') {
-                        resultDiv.innerHTML = `<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>Saved to <code>${data.path}</code></div>`;
-                    } else {
-                        resultDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>${data.error}</div>`;
-                    }
-                })
-                .catch(e => {
-                    clearTimeout(timeout);
-                    resultDiv.style.display = '';
-                    const msg = e.name === 'AbortError'
-                        ? 'Export timed out (>10 min). Try a shorter time interval or fewer channels.'
-                        : `Export failed: ${e}`;
-                    resultDiv.innerHTML = `<div class="alert alert-danger">${msg}</div>`;
-                });
+        // Direct browser download: plain form submit, browser handles slow responses natively.
+        // Clear any stale export_dir so the form doesn't accidentally export to a drive.
+        document.getElementById('csv-download-btn').addEventListener('click', function () {
+            exportDirInput.value = '';
+            resultDiv.style.display = 'none';
         });
     });
+</script>
+
+<script>
+(function () {
+    var BROWSE_URL = "{% url 'browse_usb' %}";
+    var BASE_PATH  = "/run/media/rafael";
+
+    var currentPath  = BASE_PATH;
+    var initialized  = false;
+
+    var exportBtn        = document.getElementById('csv-export-btn');
+    var panel            = document.getElementById('usb-export-panel');
+    var browser          = document.getElementById('export-browser');
+    var breadcrumb       = document.getElementById('export-breadcrumb');
+    var exportHereBtn    = document.getElementById('export-here-btn');
+    var currentPathLabel = document.getElementById('export-current-path');
+    var cancelBtn        = document.getElementById('export-cancel-btn');
+    var errorDiv         = document.getElementById('export-browser-error');
+    var exportDirInput   = document.getElementById('csv-export-dir');
+    var resultDiv        = document.getElementById('csv-export-result');
+    var form             = document.getElementById('csv-export-form');
+
+    function showError(msg) {
+        errorDiv.textContent = msg;
+        errorDiv.classList.remove('d-none');
+    }
+    function clearError() { errorDiv.classList.add('d-none'); }
+
+    function renderBreadcrumb(path) {
+        breadcrumb.innerHTML = '';
+        var base  = '/run/media';
+        var rel   = path.startsWith(base) ? path.slice(base.length) : path;
+        var parts = rel.split('/').filter(Boolean);
+        var crumbs = [{ label: '<i class="bi bi-usb-drive"></i>', path: BASE_PATH }];
+        var acc = base;
+        parts.forEach(function (p) {
+            acc += '/' + p;
+            crumbs.push({ label: p, path: acc });
+        });
+        crumbs.forEach(function (c, i) {
+            var li = document.createElement('li');
+            li.className = 'breadcrumb-item' + (i === crumbs.length - 1 ? ' active' : '');
+            if (i < crumbs.length - 1) {
+                var a = document.createElement('a');
+                a.href = '#';
+                a.innerHTML = c.label;
+                a.addEventListener('click', function (e) { e.preventDefault(); browse(c.path); });
+                li.appendChild(a);
+            } else {
+                li.innerHTML = c.label;
+            }
+            breadcrumb.appendChild(li);
+        });
+    }
+
+    function browse(path) {
+        clearError();
+        browser.innerHTML = '<span class="text-muted fst-italic small">Loading…</span>';
+        currentPath = path;
+        currentPathLabel.textContent = path;
+        renderBreadcrumb(path);
+
+        fetch(BROWSE_URL + '?path=' + encodeURIComponent(path))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.error) { showError(data.error); browser.innerHTML = ''; return; }
+                browser.innerHTML = '';
+
+                if (data.parent) {
+                    var upItem = document.createElement('button');
+                    upItem.type = 'button';
+                    upItem.className = 'list-group-item list-group-item-action text-secondary small';
+                    upItem.innerHTML = '<i class="bi bi-arrow-up me-2"></i>..';
+                    upItem.addEventListener('click', function () { browse(data.parent); });
+                    browser.appendChild(upItem);
+                }
+
+                data.dirs.forEach(function (d) {
+                    var item = document.createElement('button');
+                    item.type = 'button';
+                    item.className = 'list-group-item list-group-item-action small';
+                    item.innerHTML = '<i class="bi bi-folder me-2 text-warning"></i>' + d.name;
+                    item.addEventListener('click', function () { browse(d.path); });
+                    browser.appendChild(item);
+                });
+
+                // .mwf files shown for context only (no checkboxes)
+                data.files.forEach(function (f) {
+                    var item = document.createElement('div');
+                    item.className = 'list-group-item small text-muted d-flex align-items-center gap-2';
+                    item.innerHTML = '<i class="bi bi-file-earmark-medical text-primary"></i>' + f.name;
+                    browser.appendChild(item);
+                });
+
+                if (data.dirs.length === 0 && data.files.length === 0 && !data.parent) {
+                    browser.innerHTML = '<div class="list-group-item text-muted small">' +
+                        '<i class="bi bi-exclamation-triangle me-1"></i>' +
+                        'No drives detected. Insert a USB drive and try again.</div>';
+                }
+            })
+            .catch(function () { showError('Failed to load directory.'); browser.innerHTML = ''; });
+    }
+
+    exportBtn.addEventListener('click', function () {
+        if (panel.classList.contains('d-none')) {
+            panel.classList.remove('d-none');
+            resultDiv.style.display = 'none';
+            if (!initialized) { initialized = true; browse(BASE_PATH); }
+        } else {
+            panel.classList.add('d-none');
+        }
+    });
+
+    cancelBtn.addEventListener('click', function () {
+        panel.classList.add('d-none');
+    });
+
+    exportHereBtn.addEventListener('click', function () {
+        exportDirInput.value = currentPath;
+        panel.classList.add('d-none');
+
+        resultDiv.style.display = '';
+        resultDiv.innerHTML =
+            '<div class="d-flex align-items-center gap-2 text-muted">' +
+            '<div class="spinner-border spinner-border-sm" role="status"></div>' +
+            '<span>Exporting to ' + currentPath + '…</span></div>';
+
+        var formData = new FormData(form);
+        var controller = new AbortController();
+        var timeout = setTimeout(function () { controller.abort(); }, 10 * 60 * 1000);
+
+        fetch(form.action, { method: 'POST', body: formData, signal: controller.signal })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                clearTimeout(timeout);
+                resultDiv.style.display = '';
+                if (data.status === 'ok') {
+                    resultDiv.innerHTML =
+                        '<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>' +
+                        'Saved to <code>' + data.path + '</code></div>';
+                } else {
+                    resultDiv.innerHTML =
+                        '<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>' +
+                        data.error + '</div>';
+                }
+            })
+            .catch(function (e) {
+                clearTimeout(timeout);
+                var msg = e.name === 'AbortError'
+                    ? 'Export timed out (>10 min). Try a shorter time interval or fewer channels.'
+                    : 'Export failed: ' + e;
+                resultDiv.style.display = '';
+                resultDiv.innerHTML = '<div class="alert alert-danger">' + msg + '</div>';
+            });
+    });
+})();
 </script>
 
 <script>

@@ -28,17 +28,17 @@ class TestForms(TestCase):
         form = UserRegistrationForm(data={
             'username': 'testuser',
             'name': 'Test User',
-            'mobile': '',  # Required field left empty
+            'email': 'not-an-email',  # Invalid email format
             'password1': 'verysecurepassword123',
             'password2': 'verysecurepassword123'
         })
         self.assertFalse(form.is_valid())
-        self.assertIn('mobile', form.errors)
+        self.assertIn('email', form.errors)
 
     def test_user_registration_form_no_data(self):
         form = UserRegistrationForm(data={})
         self.assertFalse(form.is_valid())
-        self.assertEqual(len(form.errors), 5)  # Expecting errors for 'username', 'name', 'mobile', 'password1', 'password2'
+        self.assertEqual(len(form.errors), 4)  # Expecting errors for 'username', 'name', 'password1', 'password2' (email is optional)
 
     def test_multiple_file_input_multiple_files(self):
         file1 = SimpleUploadedFile(name='test1.mwf', content=b'Some MWF content', content_type='application/octet-stream')
