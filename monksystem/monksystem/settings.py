@@ -166,22 +166,20 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 # Must match or be shorter than SESSION_COOKIE_AGE.
 IDLE_LOGOUT_SECONDS = 900
 
-# Log all Django request errors (500s) to a file so they can be diagnosed
-# without enabling DEBUG in production.
+# Log all Django request errors (500s) to stderr — gunicorn captures this
+# and writes it to /var/log/monk/gunicorn.log without any permission issues.
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'django_file': {
+        'console': {
             'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'filename': '/var/log/monk/django.log',
-            'delay': True,
+            'class': 'logging.StreamHandler',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['django_file'],
+            'handlers': ['console'],
             'level': 'ERROR',
             'propagate': True,
         },
