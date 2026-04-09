@@ -222,9 +222,16 @@ def download_mfer_header(request, file_id):
     if not _has_file_access(request, file_instance):
         return HttpResponseForbidden("You do not have permission to access this file.")
 
+    anonymize = (
+        request.POST.get("anonymize") == "true"
+        or request.GET.get("anonymize") == "true"
+    )
+    export_dir = request.POST.get("export_dir", "").strip()
     file_path = file_instance.file.path
+    header_name = f"{file_instance.title}_header.txt"
+
     try:
-        if "anonymize" in request.POST and request.POST["anonymize"] == "true":
+        if anonymize:
             anon_path = anonymize_data(file_path)
             try:
                 header_info = get_header(anon_path)
@@ -232,16 +239,31 @@ def download_mfer_header(request, file_id):
                 os.unlink(anon_path)
         else:
             header_info = get_header(file_path)
-
-        response = HttpResponse(header_info, content_type="text/plain")
-        response["Content-Disposition"] = (
-            f'attachment; filename="{file_instance.title}_header.txt"'
-        )
-        return response
     except Exception as e:
+        if export_dir:
+            return JsonResponse(
+                {"error": f"Failed to read header: {e}"}, status=500
+            )
         return HttpResponse(
             f"An error occurred while retrieving the header: {str(e)}", status=500
         )
+
+    if export_dir:
+        try:
+            dest_path = _safe_export_path(export_dir, header_name)
+        except ValueError:
+            return JsonResponse({"error": "Invalid export directory."}, status=400)
+        try:
+            with open(dest_path, "w") as f:
+                f.write(str(header_info))
+        except Exception as e:
+            return JsonResponse({"error": f"Export failed: {e}"}, status=500)
+        return JsonResponse({"status": "ok", "path": str(dest_path)})
+
+    # Fallback: stream as browser download (used by tests; hidden from kiosk UI).
+    response = HttpResponse(header_info, content_type="text/plain")
+    response["Content-Disposition"] = f'attachment; filename="{header_name}"'
+    return response
 
 
 @login_required
@@ -253,28 +275,54 @@ def download_mwf(request, file_id):
     if not file_instance.file.name.lower().endswith(".mwf"):
         return HttpResponseBadRequest("Unsupported file format.")
 
-    try:
-        file_path = file_instance.file.path
-        if request.GET.get("anonymize") == "true":
-            anon_path = anonymize_data(file_path)
-            try:
-                with open(anon_path, "rb") as f:
-                    content = f.read()
-            finally:
-                os.unlink(anon_path)
-        else:
-            with open(file_path, "rb") as f:
-                content = f.read()
+    anonymize = (
+        request.POST.get("anonymize") == "true"
+        or request.GET.get("anonymize") == "true"
+    )
+    export_dir = request.POST.get("export_dir", "").strip()
+    file_path = file_instance.file.path
+    mwf_name = f"{file_instance.title}.mwf"
 
-        response = HttpResponse(content, content_type="application/octet-stream")
-        response["Content-Disposition"] = (
-            f'attachment; filename="{file_instance.title}.mwf"'
-        )
-        return response
+    try:
+        if anonymize:
+            source_path = anonymize_data(file_path)
+            cleanup_source = True
+        else:
+            source_path = file_path
+            cleanup_source = False
     except Exception as e:
+        if export_dir:
+            return JsonResponse({"error": f"Anonymize failed: {e}"}, status=500)
         return HttpResponse(
             f"An error occurred while reading the file: {str(e)}", status=500
         )
+
+    try:
+        if export_dir:
+            try:
+                dest_path = _safe_export_path(export_dir, mwf_name)
+            except ValueError:
+                return JsonResponse(
+                    {"error": "Invalid export directory."}, status=400
+                )
+            try:
+                shutil.copyfile(source_path, str(dest_path))
+            except Exception as e:
+                return JsonResponse({"error": f"Export failed: {e}"}, status=500)
+            return JsonResponse({"status": "ok", "path": str(dest_path)})
+
+        # Fallback: stream as browser download (used by tests; hidden from kiosk UI).
+        with open(source_path, "rb") as f:
+            content = f.read()
+        response = HttpResponse(content, content_type="application/octet-stream")
+        response["Content-Disposition"] = f'attachment; filename="{mwf_name}"'
+        return response
+    finally:
+        if cleanup_source:
+            try:
+                os.unlink(source_path)
+            except OSError:
+                pass
 
 
 def anonymize_data(file_path):
