@@ -193,6 +193,7 @@ def download_format_csv(request, file_id):
         os.close(fd)
         try:
             data.writeToCsv(tmp_path)
+            _inject_datetime_column(tmp_path, getattr(header, "measurementTimeISO", None))
             shutil.move(tmp_path, str(dest_path))
         except Exception as e:
             try:
@@ -208,6 +209,7 @@ def download_format_csv(request, file_id):
     os.close(fd)
     try:
         data.writeToCsv(tmp_path)
+        _inject_datetime_column(tmp_path, getattr(header, "measurementTimeISO", None))
         with open(tmp_path, "rb") as f:
             response = HttpResponse(f.read(), content_type="text/csv")
         response["Content-Disposition"] = f'attachment; filename="{csv_name}"'
@@ -325,6 +327,24 @@ def download_mwf(request, file_id):
                 pass
 
 
+def _inject_datetime_column(csv_path, measurement_time_iso):
+    """Add an absolute 'Datetime (ISO 8601)' column after the Time column in-place."""
+    if not measurement_time_iso or measurement_time_iso == "N/A":
+        return
+    try:
+        start_dt = pd.to_datetime(measurement_time_iso)
+    except Exception:
+        return
+    df = pd.read_csv(csv_path)
+    time_col = next((c for c in df.columns if c.strip().lower().startswith("time")), None)
+    if time_col is None:
+        return
+    datetimes = start_dt + pd.to_timedelta(df[time_col], unit="s")
+    time_idx = df.columns.get_loc(time_col)
+    df.insert(time_idx + 1, "Datetime (ISO 8601)", datetimes.dt.strftime("%Y-%m-%dT%H:%M:%S.%f").str[:-3])
+    df.to_csv(csv_path, index=False)
+
+
 def anonymize_data(file_path):
     try:
         data = Data(file_path)
@@ -374,9 +394,27 @@ def plot_graph(request, file_id):
 
         # Use the time column as x-axis if present, otherwise fall back to row index
         time_col = next((c for c in df.columns if c.strip().lower().startswith("time")), None)
-        x = df[time_col] if time_col is not None else df.index
-        x_label = "Time (s)" if time_col is not None else "Index"
         signal_cols = [c for c in df.columns if c != time_col]
+
+        # Convert relative seconds to absolute datetime using the recording start time
+        header = get_header(file_instance.file.path)
+        measurement_time_iso = getattr(header, "measurementTimeISO", None)
+        start_dt = None
+        if measurement_time_iso and measurement_time_iso != "N/A":
+            try:
+                start_dt = pd.to_datetime(measurement_time_iso)
+            except Exception:
+                pass
+
+        if start_dt is not None and time_col is not None:
+            x = start_dt + pd.to_timedelta(df[time_col], unit="s")
+            x_label = "Time"
+        elif time_col is not None:
+            x = df[time_col]
+            x_label = "Time (s)"
+        else:
+            x = df.index
+            x_label = "Index"
 
         # Parse "NAME: MANTISSAx10^EXP (UNIT)" column headers to scale to physical units
         _col_re = re.compile(r"^\s*(.+?):\s*([\d.]+)x10\^(-?\d+)\s*\((.+?)\)\s*$")
@@ -408,11 +446,12 @@ def plot_graph(request, file_id):
                 label = f"{name} ({scaled_unit})" if scaled_unit else name
                 fig.add_trace(go.Scatter(x=x, y=y, mode="lines", name=label))
             fig.update_layout(
-                title="Combined Graph", xaxis_title=x_label, yaxis_title="Values"
+                title="Combined Graph", xaxis_title=x_label, yaxis_title="Values",
+                xaxis={"tickformat": "%H:%M:%S"} if (start_dt is not None and time_col is not None) else {},
             )
         else:
             fig = make_subplots(
-                rows=len(signal_cols), cols=1, shared_xaxes=True,
+                rows=len(signal_cols), cols=1, shared_xaxes=False,
                 subplot_titles=[_parse_col(c)[0] for c in signal_cols],
             )
             for i, column in enumerate(signal_cols):
@@ -424,11 +463,15 @@ def plot_graph(request, file_id):
                     row=i + 1, col=1,
                 )
                 fig.update_yaxes(title_text=scaled_unit, row=i + 1, col=1)
+                fig.update_xaxes(title_text=x_label, row=i + 1, col=1)
             fig.update_layout(title="Waveform", height=300 * len(signal_cols))
 
         # Apply to ALL axes — for_each_* guarantees every subplot axis is reached
         fig.for_each_yaxis(lambda ax: ax.update(exponentformat="none", tickformat=".6~g"))
-        fig.for_each_xaxis(lambda ax: ax.update(exponentformat="none", tickformat=".6~g"))
+        if start_dt is not None and time_col is not None:
+            fig.for_each_xaxis(lambda ax: ax.update(tickformat="%H:%M:%S"))
+        else:
+            fig.for_each_xaxis(lambda ax: ax.update(exponentformat="none", tickformat=".6~g"))
 
         graph_html = fig.to_html(
             full_html=True,
