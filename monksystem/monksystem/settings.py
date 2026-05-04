@@ -73,6 +73,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'monksystem.context_processors.idle_logout',
+                'monksystem.context_processors.version',
             ],
         },
     },
