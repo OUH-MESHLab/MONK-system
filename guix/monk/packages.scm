@@ -28,13 +28,13 @@
 (define-public python-monklib
   (package
     (name "python-monklib")
-    (version "0.2.4")
+    (version "0.1.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/OUH-MESHLab/MONK-library.git")
-             (commit "e4885c10f4e34c9c5575123cf48afe2882357eed")))
+             (commit "90d484d6e0de0a96e30637476dd82772574369c0")))
        (file-name (git-file-name name version))
        (sha256
         (base32 "1hl26clc845jyzalffhahwzchw5x5ai817i65pshv11pjdm50168"))))
